@@ -81,9 +81,12 @@ test.describe("圖說", () => {
     );
   });
 
-  test("想像圖沒有出處連結", async ({ page }) => {
+  test("想像圖沒有出處連結，只有參考資料編號的站內連結", async ({ page }) => {
     await page.goto(PATH);
-    await expect(figureOf(page, IMAGINED_ALT).getByRole("link")).toHaveCount(0);
+    const links = figureOf(page, IMAGINED_ALT).getByRole("link");
+    await expect(links).toHaveText(["〔1〕", "〔2〕"]);
+    await expect(links.nth(0)).toHaveAttribute("href", "#ref-bell-log");
+    await expect(links.nth(1)).toHaveAttribute("href", "#ref-tide-table");
     await expect(figureOf(page, IMAGINED_ALT).getByText("照片：")).toHaveCount(
       0,
     );

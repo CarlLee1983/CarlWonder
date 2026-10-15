@@ -13,6 +13,9 @@ export const BODY_LENGTH = { min: 3000, max: 5000 } as const;
  */
 export const STORY_LENGTH = { min: 450, max: 600 } as const;
 
+/** 證據說明的條數區間。 */
+export const EVIDENCE_NOTE_COUNT = { min: 5, max: 10 } as const;
+
 /** 標題不得出現的字眼。 */
 export const BANNED_TITLE_WORDS = ["驚人", "顛覆", "震驚"] as const;
 

@@ -39,7 +39,10 @@ export function readMarkdown(
     throw new FrontmatterError("找不到 frontmatter（檔案須以 --- 區塊開頭）。");
   }
   try {
-    return { data: parse(yaml), body };
+    // Astro 用 js-yaml 預設 schema 解析 frontmatter；這裡以 yaml 的 core schema 加 timestamp
+    // 近似它的日期行為（沒加引號的 2026-01-10 是日期型別，schema 才擋得到）。
+    // 其他語法（例如合併鍵）不保證與 Astro 一致。
+    return { data: parse(yaml, { customTags: ["timestamp"] }), body };
   } catch (error) {
     throw new FrontmatterError(
       `frontmatter 無法解析：${(error as Error).message}`,

@@ -1,0 +1,105 @@
+---
+import type { EvidenceNote } from "../content/chapter-schema";
+import { EVIDENCE_LEVEL_LABELS } from "../content/evidence-levels";
+import {
+  referenceAnchor,
+  referenceMark,
+  requireReferenceNumber,
+} from "../content/reference-numbers";
+
+interface Props {
+  notes: readonly EvidenceNote[];
+  /** 參考資料鍵 → 顯示編號（referenceNumbers）。 */
+  numbers: ReadonlyMap<string, number>;
+  /** 篇章識別值，只用在錯誤訊息。 */
+  chapterId: string;
+}
+
+const { notes, numbers, chapterId } = Astro.props;
+// 先把每條的編號取好：鍵未定義就在這裡丟錯（astro dev 不跑 check:content）。
+const rows = notes.map((note, index) => ({
+  note,
+  refs: note.refs.map((key) => ({
+    key,
+    number: requireReferenceNumber(
+      numbers,
+      key,
+      `篇章 ${chapterId} 的證據說明第 ${index + 1} 條`,
+    ),
+  })),
+}));
+---
+
+<section class="evidence" aria-labelledby="evidence-notes-heading">
+  <h2 id="evidence-notes-heading">證據說明</h2>
+  <ul id="evidence-notes" class="evidence-notes">
+    {
+      rows.map(({ note, refs }) => (
+        <li class="evidence-note">
+          <span class="evidence-note__level">
+            {EVIDENCE_LEVEL_LABELS[note.level]}
+          </span>
+          <span class="evidence-note__claim">{note.claim}</span>
+          <span class="evidence-note__refs">
+            {refs.map(({ key, number }) => (
+              <a
+                href={`#${referenceAnchor(key)}`}
+                aria-label={`參考資料 ${number}`}
+              >
+                {referenceMark(number)}
+              </a>
+            ))}
+          </span>
+        </li>
+      ))
+    }
+  </ul>
+</section>
+
+<style>
+  .evidence-notes {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .evidence-note {
+    display: grid;
+    grid-template-columns: 3.5rem 1fr;
+    gap: 0 0.75rem;
+    padding: 0.6rem 0;
+    border-top: 1px solid #e3dccb;
+    line-height: 1.7;
+  }
+
+  .evidence-note:last-child {
+    border-bottom: 1px solid #e3dccb;
+  }
+
+  .evidence-note__level {
+    font-weight: 700;
+  }
+
+  .evidence-note__refs {
+    grid-column: 2;
+  }
+
+  .evidence-note__refs a {
+    display: inline-block;
+    min-width: 1.75rem;
+    min-height: 1.75rem;
+    margin-right: 0.25rem;
+  }
+
+  /* 寬螢幕三欄：等級、主張、編號。 */
+  @media (min-width: 40rem) {
+    .evidence-note {
+      grid-template-columns: 4rem 1fr 7rem;
+    }
+
+    .evidence-note__refs {
+      grid-column: 3;
+      text-align: right;
+    }
+  }
+</style>

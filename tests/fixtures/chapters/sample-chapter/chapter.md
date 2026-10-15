@@ -3,9 +3,54 @@ title: "範例篇章：固定資料的測試題材"
 summary: "這是一篇只給測試使用的固定資料篇章摘要。"
 draft: false
 publishedAt: 2026-01-15
+lastChecked: "2026-01-20"
 references:
   - key: bell-log
+    author: 霧港鎮公所
+    year: "1893"
+    title: 霧港鐘樓管鐘日誌（影印本）
+    publisher: 霧港鎮立圖書館
+    url: https://example.com/library/bell-log
+    accessed: "2026-01-10"
   - key: tide-table
+    author: 測試海洋研究所
+    year: "2019"
+    title: 霧港潮汐觀測年報
+    publisher: 測試海洋研究所
+    url: https://example.com/ocean/tide-table
+    accessed: "2026-01-12"
+  - key: harbor-survey
+    author: 丁工程師
+    year: 公元前 54 年
+    title: 鐘樓機房測量紀錄
+    publisher: 測試工程學會期刊
+    url: https://example.com/journal/harbor-survey
+    accessed: "2026-01-15"
+  - key: keeper-oral-history
+    author: 戊口述史小組
+    year: "2021"
+    title: 歷任管鐘人口述訪談集
+    publisher: 霧港文化協會
+    url: https://example.com/culture/keeper-oral-history
+    accessed: "2026-01-18"
+evidenceNotes:
+  - claim: 鐘樓蓋在突出海面的岩石上，石牆厚達一公尺
+    level: known
+    refs: [bell-log]
+  - claim: 機房裡有直徑約兩公尺、邊緣綁著陶罐的木輪
+    level: known
+    refs: [bell-log, harbor-survey]
+  - claim: 空氣流動推動木輪，再撥動木槌敲鐘
+    level: inferred
+    refs: [tide-table]
+  - claim: 響鐘的節奏與月相有關
+    level: inferred
+    refs: [tide-table, keeper-oral-history]
+  - claim: 隱居鐘匠留下永不停止的機器
+    level: legend
+    refs: [keeper-oral-history]
+  - claim: 岩石底下的洞穴有多大
+    level: unknown
 images:
   - file: bell-tower-photo.webp
     type: artifact-photo

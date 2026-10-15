@@ -524,8 +524,8 @@ ${TOWER_CREDIT}    license:
     it(`references 的 url 不接受 ${bad}`, async () => {
       const s = scenario();
       s.replaceInChapter(
-        "  - key: bell-log\n",
-        `  - key: bell-log\n    url: ${bad}\n`,
+        "url: https://example.com/library/bell-log",
+        `url: ${bad}`,
       );
       const issues = await runContentChecks(s.options);
       assert.equal(issues.length, 1);

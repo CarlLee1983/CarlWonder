@@ -6,6 +6,8 @@ import {
   readMarkdown,
   readMarkdownBody,
 } from "./io.ts";
+import { checkEvidence } from "./evidence.ts";
+import { validateFrontmatter } from "./frontmatter.ts";
 import { checkChapterImages, checkResearch } from "./images.ts";
 import { checkBody, checkStory, checkTitle } from "./text-checks.ts";
 
@@ -43,14 +45,24 @@ async function checkChapter(
         ...checkTitle(chapterFile, title),
         ...checkBody(chapterFile, chapter.body),
       );
-      const images = await checkChapterImages(
-        chapterFile,
-        dir,
-        chapter.data,
-        chapter.body,
-      );
-      issues.push(...images.issues);
-      imageFiles = images.files;
+      // schema 不過就沒有可靠的欄位可檢查，只回報形狀問題。
+      const frontmatter = validateFrontmatter(chapterFile, chapter.data);
+      issues.push(...frontmatter.issues);
+      if (frontmatter.data) {
+        const { images, references, evidenceNotes } = frontmatter.data;
+        const result = await checkChapterImages(
+          chapterFile,
+          dir,
+          images,
+          references,
+          chapter.body,
+        );
+        issues.push(
+          ...result.issues,
+          ...checkEvidence(chapterFile, references, evidenceNotes),
+        );
+        imageFiles = result.files;
+      }
     }
   } catch (error) {
     // 讀不到或 frontmatter 壞掉就沒有可靠的標題與內文，回報後仍繼續檢查 story.md。

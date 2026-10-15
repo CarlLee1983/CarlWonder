@@ -2,6 +2,7 @@
 // Markdown 外掛（不變式保險，檢查通過就不會觸發）共用。
 import type { ChapterImage } from "../content/chapter-schema.ts";
 import { IMAGE_TYPE_LABELS, isSelfMade } from "../content/image-types.ts";
+import { undefinedReferenceKeys } from "./reference-rules.ts";
 import { ALLOWED_LICENSES, LICENSE_HELP } from "./thresholds.ts";
 
 export const imageNotListed = (file: string) =>
@@ -44,12 +45,10 @@ export function imageFieldProblems(
         `想像圖「${image.file}」缺少 basis（依據的證據與參考資料）。`,
       );
     } else {
-      for (const key of image.basis.refs) {
-        if (!known.has(key)) {
-          problems.push(
-            `想像圖「${image.file}」的 basis.refs 指向不存在的參考資料鍵「${key}」。`,
-          );
-        }
+      for (const key of undefinedReferenceKeys(image.basis.refs, known)) {
+        problems.push(
+          `想像圖「${image.file}」的 basis.refs 指向不存在的參考資料鍵「${key}」。`,
+        );
       }
     }
     if (!image.imagined) {

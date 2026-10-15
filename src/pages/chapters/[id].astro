@@ -1,5 +1,8 @@
 ---
 import { render } from "astro:content";
+import EvidenceNotes from "../../components/EvidenceNotes.astro";
+import References from "../../components/References.astro";
+import { referenceNumbers } from "../../content/reference-numbers";
 import Base from "../../layouts/Base.astro";
 import { getVisibleChapters } from "../../utils/chapters";
 
@@ -13,6 +16,8 @@ export async function getStaticPaths() {
 
 const { chapter } = Astro.props;
 const { Content } = await render(chapter);
+const { references, evidenceNotes, lastChecked } = chapter.data;
+const numbers = referenceNumbers(references);
 ---
 
 <Base
@@ -26,12 +31,24 @@ const { Content } = await render(chapter);
     <div class="chapter-body">
       <Content />
     </div>
+    <div class="chapter-evidence">
+      <EvidenceNotes
+        notes={evidenceNotes}
+        numbers={numbers}
+        chapterId={chapter.id}
+      />
+      <References references={references} lastChecked={lastChecked} />
+    </div>
   </article>
 </Base>
 
 <style is:global>
   /* 正文欄約 640 px；圖片跟著所屬段落，窄螢幕在段落之後，寬螢幕浮到右側旁欄。 */
   .chapter-body {
+    max-width: 40rem;
+  }
+
+  .chapter-evidence {
     max-width: 40rem;
   }
 

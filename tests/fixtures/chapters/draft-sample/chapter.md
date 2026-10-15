@@ -3,6 +3,28 @@ title: "草稿範例：不該被輸出的篇章"
 summary: "這是草稿篇章的摘要，正式建置不應該出現。"
 draft: true
 publishedAt: 2026-02-01
+lastChecked: "2026-02-03"
+references:
+  - key: draft-log
+    author: 草稿作者
+    year: "2020"
+    title: 草稿參考文獻
+    publisher: 草稿出版社
+    url: https://example.com/draft/log
+    accessed: "2026-02-02"
+evidenceNotes:
+  - claim: 草稿的第一個已知主張
+    level: known
+    refs: [draft-log]
+  - claim: 草稿的第二個已知主張
+    level: known
+    refs: [draft-log]
+  - claim: 草稿的推論主張
+    level: inferred
+  - claim: 草稿的傳說主張
+    level: legend
+  - claim: 草稿的未知問題
+    level: unknown
 ---
 
 ## 草稿的第一節

@@ -1,5 +1,10 @@
 import type { ChapterImage } from "../content/chapter-schema.ts";
 import { IMAGE_BADGES, isSelfMade } from "../content/image-types.ts";
+import {
+  referenceAnchor,
+  referenceMark,
+  requireReferenceNumber,
+} from "../content/reference-numbers.ts";
 import { imageFieldProblems } from "../content-checks/image-rules.ts";
 
 type Property = string | number | boolean | (string | number)[];
@@ -28,14 +33,38 @@ const link = (href: string, label: string) =>
 export const FIGURE_IMAGE_SIZES =
   "(min-width: 62rem) 17.5rem, min(100vw - 2.5rem, 40rem)";
 
+/** 參考資料編號連到頁面下方的參考資料條目；aria-label 讓螢幕閱讀器唸「參考資料 n」。 */
+function referenceLink(
+  image: ChapterImage,
+  key: string,
+  numbers: ReadonlyMap<string, number>,
+): Element {
+  const number = requireReferenceNumber(
+    numbers,
+    key,
+    `想像圖「${image.file}」的 basis.refs`,
+  );
+  return element(
+    "a",
+    {
+      href: `#${referenceAnchor(key)}`,
+      "aria-label": `參考資料 ${number}`,
+    },
+    [text(referenceMark(number))],
+  );
+}
+
 /** 想像圖圖說：「依據：〈證據〉〔n〕。想像部分：〈猜的部分〉。」欄位已由 imageFieldProblems 驗過。 */
 function imaginedLine(
   image: ChapterImage,
   numbers: ReadonlyMap<string, number>,
-): string {
+): (Element | Text)[] {
   const basis = image.basis!;
-  const marks = basis.refs.map((key) => `〔${numbers.get(key)!}〕`);
-  return `依據：${basis.evidence}${marks.join("")}。想像部分：${image.imagined!}。`;
+  return [
+    text(`依據：${basis.evidence}`),
+    ...basis.refs.map((key) => referenceLink(image, key, numbers)),
+    text(`。想像部分：${image.imagined!}。`),
+  ];
 }
 
 /** 非自製圖末行：「照片：作者，授權」，作者連原始檔案頁、授權連條款，裁切的加註。欄位已驗過。 */
@@ -65,11 +94,11 @@ export function buildFigure(
   if (problems.length > 0) throw new Error(problems.join(""));
 
   const badge = IMAGE_BADGES[image.type];
-  const paragraph = (content: string) =>
-    element("p", { className: ["chapter-figure__text"] }, [text(content)]);
+  const paragraph = (content: (Element | Text)[]) =>
+    element("p", { className: ["chapter-figure__text"] }, content);
   const caption: Element[] = isSelfMade(image.type)
     ? [paragraph(imaginedLine(image, numbers))]
-    : [paragraph(image.caption!), creditLine(image)];
+    : [paragraph([text(image.caption!)]), creditLine(image)];
   return element(
     "figure",
     { className: ["chapter-figure"], "data-image-type": image.type },

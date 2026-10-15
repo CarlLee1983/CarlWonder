@@ -1,10 +1,7 @@
 import { existsSync, statSync } from "node:fs";
 import { join } from "node:path";
 import sharp from "sharp";
-import {
-  chapterMediaSchema,
-  type ChapterImage,
-} from "../content/chapter-schema.ts";
+import type { ChapterImage, Reference } from "../content/chapter-schema.ts";
 import { altPrefix } from "../content/image-types.ts";
 import { referenceNumbers } from "../content/reference-numbers.ts";
 import {
@@ -160,26 +157,16 @@ interface ChapterImageResult {
 }
 
 /**
- * chapter.md 的圖片檢查：frontmatter 形狀、正文與 images 一一對應、出處授權、
+ * chapter.md 的圖片檢查（frontmatter 已驗過形狀）：正文與 images 一一對應、出處授權、
  * alt、想像圖依據、圖檔規格。`dir` 是篇章資料夾（圖檔與 chapter.md 同處）。
  */
 export async function checkChapterImages(
   chapterFile: string,
   dir: string,
-  data: unknown,
+  images: readonly ChapterImage[],
+  references: readonly Reference[],
   body: string,
 ): Promise<ChapterImageResult> {
-  const parsed = chapterMediaSchema.safeParse(data ?? {});
-  if (!parsed.success) {
-    return {
-      files: [],
-      issues: parsed.error.issues.map((issue) => ({
-        file: chapterFile,
-        message: `frontmatter ${issue.path.join(".")}：${issue.message}`,
-      })),
-    };
-  }
-  const { images, references } = parsed.data;
   const known = referenceNumbers(references);
   const bodyImages = collectBodyImages(body);
   const listed = new Set(images.map((image) => image.file));
