@@ -1,0 +1,175 @@
+---
+import { render } from "astro:content";
+import { join, resolve } from "node:path";
+import EntryDoors from "../../components/EntryDoors.astro";
+import EvidenceNotes from "../../components/EvidenceNotes.astro";
+import FamilyLearning from "../../components/FamilyLearning.astro";
+import References from "../../components/References.astro";
+import { resolveChaptersDir } from "../../content/content-dir";
+import {
+  adultReadingMinutes,
+  familyTotalMinutes,
+  storyReadingMinutes,
+} from "../../content/reading-time";
+import { resolveAnchorPhoto } from "../../content/anchor-image";
+import { readMarkdownBody } from "../../content/markdown-files";
+import { splitBlocks } from "../../content/markdown-source";
+import { referenceNumbers } from "../../content/reference-numbers";
+import Base from "../../layouts/Base.astro";
+import { getVisibleChapters } from "../../utils/chapters";
+
+export async function getStaticPaths() {
+  const chapters = await getVisibleChapters();
+  return chapters.map((chapter) => ({
+    params: { id: chapter.id },
+    props: { chapter },
+  }));
+}
+
+const { chapter } = Astro.props;
+const { Content } = await render(chapter);
+const { references, evidenceNotes, lastChecked, family, images } = chapter.data;
+const numbers = referenceNumbers(references);
+
+// story.md 不在內容集合裡，直接讀檔；純 Markdown 段落，以空行切段。
+const storyText = readMarkdownBody(
+  join(resolve(resolveChaptersDir()), chapter.id, "story.md"),
+);
+if (storyText === undefined) {
+  throw new Error(`篇章 ${chapter.id} 找不到 story.md（故事開場口述稿）。`);
+}
+const paragraphs = splitBlocks(storyText);
+const anchor = resolveAnchorPhoto(
+  chapter.id,
+  family.anchorImage,
+  images,
+  chapter.body ?? "",
+);
+---
+
+<Base
+  title={`${chapter.data.title}｜CarlWonder`}
+  description={chapter.data.summary}
+  wide
+  bleed
+>
+  <article>
+    <div class="page-column">
+      <h1>{chapter.data.title}</h1>
+      <p>{chapter.data.summary}</p>
+      <EntryDoors
+        adultMinutes={adultReadingMinutes(chapter.body ?? "")}
+        familyMinutes={familyTotalMinutes(storyText, family.activity.minutes)}
+      />
+      <section id="reading" aria-label="深入正文">
+        <div class="chapter-body">
+          <Content />
+        </div>
+        <div class="chapter-evidence">
+          <EvidenceNotes
+            notes={evidenceNotes}
+            numbers={numbers}
+            chapterId={chapter.id}
+          />
+          <References references={references} lastChecked={lastChecked} />
+        </div>
+      </section>
+    </div>
+    <FamilyLearning
+      family={family}
+      paragraphs={paragraphs}
+      storyMinutes={storyReadingMinutes(storyText)}
+      anchor={anchor}
+    />
+  </article>
+</Base>
+
+<style is:global>
+  /* 正文欄約 640 px；圖片跟著所屬段落，窄螢幕在段落之後，寬螢幕浮到右側旁欄。 */
+  .chapter-body {
+    max-width: 40rem;
+  }
+
+  .chapter-evidence {
+    max-width: 40rem;
+  }
+
+  .chapter-block {
+    margin: 1em 0;
+  }
+
+  .chapter-block > p {
+    margin: 0;
+  }
+
+  .chapter-figure {
+    margin: 1em 0 0;
+  }
+
+  .chapter-figure__media {
+    position: relative;
+  }
+
+  .chapter-figure__media img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .chapter-figure__badge {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    padding: 0 0.7rem;
+    border-radius: 999px;
+    background: #1f1f1f;
+    color: #fff;
+    font-size: 0.8125rem;
+    line-height: 1.7;
+  }
+
+  .chapter-figure figcaption {
+    margin-top: 0.4rem;
+    color: #444;
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+
+  .chapter-figure figcaption p {
+    margin: 0 0 0.3rem;
+  }
+
+  @media (min-width: 62rem) {
+    .chapter-body {
+      max-width: none;
+    }
+
+    .chapter-body > :not(.chapter-block) {
+      max-width: 40rem;
+    }
+
+    /* 圖片用 float 推進右側旁欄：它不計入區塊高度，正文欄因此連續排版；
+       clear: right 讓同欄的圖往下疊，圖比後續段落長就繼續往下延伸。
+       段落改成 inline-block、與 float 圖同一行，圖的頂端才會和所屬段落齊頭。 */
+    .chapter-body {
+      display: flow-root;
+    }
+
+    .chapter-block {
+      width: 40rem;
+    }
+
+    .chapter-block > p {
+      display: inline-block;
+      vertical-align: top;
+      width: 100%;
+    }
+
+    .chapter-block > .chapter-figure {
+      float: right;
+      clear: right;
+      width: 17.5rem;
+      margin: 0 -19.5rem 1em 0;
+    }
+  }
+</style>

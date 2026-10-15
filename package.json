@@ -1,0 +1,39 @@
+{
+  "name": "carlwonder",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.1.0",
+  "engines": {
+    "node": ">=24.21.0",
+    "pnpm": ">=12.0.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "check:content": "node --experimental-strip-types scripts/check-content.ts",
+    "build": "pnpm check:content && astro build --force",
+    "preview": "astro preview",
+    "check": "pnpm format:check && astro check && pnpm build",
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "build:e2e": "CHAPTERS_DIR=tests/fixtures/chapters RESEARCH_DIR=tests/fixtures/research pnpm build",
+    "test:e2e": "pnpm build:e2e && playwright test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "@astrojs/markdown-satteri": "0.3.8",
+    "astro": "7.2.9",
+    "sharp": "0.35.2",
+    "yaml": "2.8.3"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.10",
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.63.0",
+    "@types/node": "24.19.2",
+    "prettier": "3.9.6",
+    "prettier-plugin-astro": "0.14.1",
+    "typescript": "6.0.3",
+    "wrangler": "4.147.0"
+  }
+}

@@ -1,0 +1,95 @@
+---
+import type { AnchorPhoto } from "../content/anchor-image";
+import type { Family } from "../content/chapter-schema";
+import { OBSERVATION_MINUTES } from "../content/reading-time";
+import ActivityCard from "./ActivityCard.astro";
+import ObservationCard from "./ObservationCard.astro";
+import StoryCard from "./StoryCard.astro";
+
+interface Props {
+  family: Pick<Family, "questions" | "parentTips" | "activity">;
+  /** story.md 切好的段落。 */
+  paragraphs: readonly string[];
+  /** 照稿唸完故事開場的分鐘數（reading-time.ts 推估）。 */
+  storyMinutes: number;
+  anchor: AnchorPhoto;
+}
+
+const { family, paragraphs, storyMinutes, anchor } = Astro.props;
+---
+
+<!-- 外層鋪滿視窗寬度（暖色底），內層 .page-column 放內容，避免用 100vw 造成水平捲動。 -->
+<section id="family" class="family" aria-labelledby="family-heading">
+  <div class="page-column">
+    <h2 id="family-heading">親子共學</h2>
+    <ol class="family__steps">
+      <li>① 唸故事 {storyMinutes} 分鐘</li>
+      <li>② 看照片聊一聊 {OBSERVATION_MINUTES} 分鐘</li>
+      <li>③ 動手做 {family.activity.minutes} 分鐘</li>
+    </ol>
+    <StoryCard paragraphs={paragraphs} minutes={storyMinutes} />
+    <ObservationCard
+      questions={family.questions}
+      parentTips={family.parentTips}
+      anchor={anchor}
+    />
+    <ActivityCard activity={family.activity} />
+  </div>
+</section>
+
+<style is:global>
+  .family {
+    margin-top: 3rem;
+    padding-bottom: 4rem;
+    background: #f2dfae;
+    color: #2a2112;
+  }
+
+  .family > .page-column {
+    padding-top: 2rem;
+  }
+
+  .family h2 {
+    margin: 0;
+    font-size: 2rem;
+  }
+
+  .family__steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.75rem 0 1.5rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .family__steps li {
+    padding: 0.25rem 0.875rem;
+    border-radius: 999px;
+    background: #fff;
+    font-size: 0.9375rem;
+  }
+
+  .family .card {
+    margin-bottom: 1.5rem;
+    padding: 1.5rem;
+    border-radius: 0.875rem;
+    background: #fffaf0;
+    box-shadow: 0 3px 0 #c9a24a;
+  }
+
+  .family .card:last-child {
+    margin-bottom: 0;
+  }
+
+  .family .card h3 {
+    margin: 0 0 0.75rem;
+    font-size: 1.375rem;
+  }
+
+  /* 錨點跳轉時不貼著視窗頂端。 */
+  #reading,
+  #family {
+    scroll-margin-top: 1rem;
+  }
+</style>

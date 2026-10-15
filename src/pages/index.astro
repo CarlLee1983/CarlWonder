@@ -1,0 +1,29 @@
+---
+import Base from "../layouts/Base.astro";
+import { getVisibleChapters } from "../utils/chapters";
+
+const chapters = (await getVisibleChapters()).sort(
+  (a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime(),
+);
+---
+
+<Base
+  title="CarlWonder"
+  description="用精彩敘事探索世界奇異知識，每篇查核來源，附親子共學。"
+>
+  <h1>CarlWonder</h1>
+  {
+    chapters.length === 0 ? (
+      <p>篇章準備中。</p>
+    ) : (
+      <ul aria-label="篇章清單">
+        {chapters.map((chapter) => (
+          <li>
+            <a href={`/chapters/${chapter.id}/`}>{chapter.data.title}</a>
+            <p>{chapter.data.summary}</p>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</Base>

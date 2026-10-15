@@ -1,0 +1,53 @@
+---
+import type { Reference } from "../content/chapter-schema";
+import { referenceAnchor } from "../content/reference-numbers";
+
+interface Props {
+  /** 清單順序就是顯示編號（與 referenceNumbers 同一個順序）。 */
+  references: readonly Reference[];
+  lastChecked: string;
+}
+
+const { references, lastChecked } = Astro.props;
+---
+
+<section class="references" aria-labelledby="references-heading">
+  <h2 id="references-heading">參考資料</h2>
+  <ol id="references" class="reference-list">
+    {
+      references.map((reference) => (
+        <li id={referenceAnchor(reference.key)}>
+          <span>{reference.author}</span>
+          <span>（{reference.year}）。</span>
+          <span>{reference.title}。</span>
+          <span>{reference.publisher}。</span>
+          <a href={reference.url}>{reference.url}</a>
+          <span>。查閱日期：{reference.accessed}</span>
+        </li>
+      ))
+    }
+  </ol>
+  <p class="last-checked">最後查核：{lastChecked}</p>
+</section>
+
+<style>
+  .reference-list {
+    padding-left: 2rem;
+    line-height: 1.7;
+  }
+
+  .reference-list li {
+    margin-bottom: 0.6rem;
+    scroll-margin-top: 1rem;
+    overflow-wrap: anywhere;
+  }
+
+  /* 從編號跳過來時標出目標條目。 */
+  .reference-list li:target {
+    background: #fff1c2;
+  }
+
+  .last-checked {
+    font-weight: 700;
+  }
+</style>

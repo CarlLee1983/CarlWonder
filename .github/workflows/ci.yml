@@ -1,0 +1,20 @@
+name: CI
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+
+      # 檢查步驟與部署工作流程共用，定義在 .github/actions/verify。
+      - name: Verify
+        uses: ./.github/actions/verify

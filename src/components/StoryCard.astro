@@ -1,0 +1,139 @@
+---
+import StoryText from "./StoryText.astro";
+
+interface Props {
+  /** 故事開場的段落（story.md 以空行切段）。 */
+  paragraphs: readonly string[];
+  /** 朗讀這段故事約需的分鐘數。 */
+  minutes: number;
+}
+
+const { paragraphs, minutes } = Astro.props;
+---
+
+<article class="card story-card">
+  <div class="story-card__head">
+    <h3>故事開場</h3>
+    <button type="button" class="btn" data-read-aloud-open>朗讀模式</button>
+  </div>
+  <p class="story-card__note">
+    照稿唸完約 {minutes} 分鐘，中間不用停下來提問。
+  </p>
+  <div class="story-card__text">
+    <StoryText paragraphs={paragraphs} />
+  </div>
+</article>
+
+<!-- 朗讀模式：原生 dialog，showModal() 打開後全螢幕；Esc 或關閉按鈕關閉。 -->
+<dialog class="read-aloud" aria-labelledby="read-aloud-title" data-read-aloud>
+  <div class="read-aloud__bar">
+    <h2 id="read-aloud-title">故事開場</h2>
+    <button type="button" class="btn" data-read-aloud-close>
+      關閉朗讀模式
+    </button>
+  </div>
+  <div class="read-aloud__text">
+    <StoryText paragraphs={paragraphs} />
+  </div>
+</dialog>
+
+<script>
+  // 朗讀模式只在瀏覽器端，不持久化。
+  // 前提：一頁只有一張故事卡（一篇篇章一個故事開場），所以用 querySelector 取唯一一組元素；
+  // 若日後同頁出現多張故事卡，要改成逐卡綁定。
+  const dialog = document.querySelector<HTMLDialogElement>("[data-read-aloud]");
+  const openButton = document.querySelector<HTMLButtonElement>(
+    "[data-read-aloud-open]",
+  );
+  const closeButton = document.querySelector<HTMLButtonElement>(
+    "[data-read-aloud-close]",
+  );
+
+  openButton?.addEventListener("click", () => dialog?.showModal());
+  closeButton?.addEventListener("click", () => dialog?.close());
+  // Esc 與關閉按鈕都會觸發 close：焦點明確還給開啟的按鈕。
+  dialog?.addEventListener("close", () => openButton?.focus());
+</script>
+
+<style>
+  .story-card__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .story-card__head h3 {
+    margin: 0;
+  }
+
+  .story-card__note {
+    margin: 0.5rem 0 0;
+    color: #5a4c33;
+    font-size: 0.9375rem;
+  }
+
+  .story-card__text {
+    font-size: 1.1875rem;
+    line-height: 2;
+  }
+
+  .story-card__text p {
+    margin: 0.75rem 0 0;
+  }
+
+  .btn {
+    padding: 0.5rem 1.125rem;
+    border: 0;
+    border-radius: 999px;
+    background: #2a2112;
+    color: #fff;
+    font: inherit;
+    font-size: 0.9375rem;
+    cursor: pointer;
+  }
+
+  .read-aloud {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: #fffaf0;
+    color: #2a2112;
+    overflow: auto;
+  }
+
+  .read-aloud__bar {
+    position: sticky;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem clamp(1rem, 6vw, 5rem);
+    background: #fffaf0;
+    border-bottom: 1px solid #e0d3b0;
+  }
+
+  .read-aloud__bar h2 {
+    margin: 0;
+    font-size: 1.25rem;
+  }
+
+  /* 字級明顯大於卡片內文，方便坐在孩子旁邊照唸。 */
+  .read-aloud__text {
+    max-width: 48rem;
+    margin: 0 auto;
+    padding: 1.5rem clamp(1rem, 6vw, 5rem) 4rem;
+    font-size: clamp(1.75rem, 3.2vw, 2.25rem);
+    line-height: 2.1;
+  }
+
+  .read-aloud__text p {
+    margin: 0 0 1.25rem;
+  }
+</style>

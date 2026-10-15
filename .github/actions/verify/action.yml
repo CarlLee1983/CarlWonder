@@ -1,0 +1,51 @@
+name: Verify
+description: CI 與部署共用的必要檢查（需先 checkout）。順序固定，任一步驟失敗即停止。
+
+runs:
+  using: composite
+  steps:
+    - name: Install pnpm
+      uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0 (Node.js 24)
+      with:
+        version: 12.1.0
+        run_install: false
+
+    - name: Install Node.js
+      uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+      with:
+        node-version: 24.21.0
+        cache: pnpm
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile
+
+    - name: Install Playwright Chromium
+      shell: bash
+      run: pnpm exec playwright install --with-deps chromium
+
+    # Playwright 只附 WenQuanYi 與 IPA 字型；裝 Noto CJK，
+    # 讓瀏覽器測試量到的版面與一般讀者裝置一致。
+    - name: Install CJK fonts
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends fonts-noto-cjk
+
+    - name: Check formatting, types, and production build
+      shell: bash
+      run: pnpm check
+
+    - name: Run unit tests
+      shell: bash
+      run: pnpm test
+
+    - name: Run browser tests
+      shell: bash
+      run: pnpm test:e2e
+
+    # 只驗證設定：此時 dist 是 e2e 步驟用固定篇章建出來的，
+    # 部署工作流程必須另以正式內容重新建置。
+    - name: Validate Cloudflare deployment
+      shell: bash
+      run: pnpm exec wrangler deploy --dry-run

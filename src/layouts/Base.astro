@@ -1,0 +1,72 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  noindex?: boolean;
+  /** 加寬頁面（容納 640 px 正文欄加右側旁欄），寬螢幕才有差別。 */
+  wide?: boolean;
+  /**
+   * 頁面自己排欄位：`<main>` 不包 `.page-column`，讓區段可以鋪滿整個視窗寬度
+   * （例如親子共學的暖色底），內容再各自放進 `.page-column`。
+   */
+  bleed?: boolean;
+}
+
+const {
+  title,
+  description,
+  noindex = false,
+  wide = false,
+  bleed = false,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="zh-Hant-TW">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex" />}
+  </head>
+  <body class:list={{ wide }}>
+    <header class="page-column">
+      <a href="/">CarlWonder</a>
+    </header>
+    <main class:list={{ "page-column": !bleed }}>
+      <slot />
+    </main>
+  </body>
+</html>
+
+<style is:global>
+  body {
+    margin: 0;
+    color: #1f1f1f;
+    background: #fffdf8;
+    font-family: system-ui, "Noto Sans TC", "PingFang TC", sans-serif;
+    line-height: 1.9;
+  }
+
+  a {
+    color: #0b4f8a;
+  }
+
+  /* 置中欄位：內容寬度固定，左右留白；區段要鋪滿視窗時，外層全寬、內層放這個欄位。 */
+  .page-column {
+    max-width: 42rem;
+    margin: 0 auto;
+    padding: 1rem 1.25rem 0;
+  }
+
+  main.page-column {
+    padding-bottom: 4rem;
+  }
+
+  @media (min-width: 62rem) {
+    body.wide .page-column {
+      max-width: 62rem;
+    }
+  }
+</style>
