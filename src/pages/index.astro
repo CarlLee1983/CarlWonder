@@ -1,29 +1,817 @@
 ---
+import { Image } from "astro:assets";
+import { join, resolve } from "node:path";
+import { coverSentence } from "../content/cover-sentence";
+import { resolveChaptersDir } from "../content/content-dir";
+import { creditSegments } from "../content/image-credit";
+import { readMarkdownBody } from "../content/markdown-files";
+import {
+  adultReadingMinutes,
+  familyTotalMinutes,
+} from "../content/reading-time";
+import { resolveAnchorPhoto } from "../content/anchor-image";
+import {
+  EVIDENCE_LEVELS,
+  EVIDENCE_LEVEL_LABELS,
+} from "../content/evidence-levels";
 import Base from "../layouts/Base.astro";
 import { getVisibleChapters } from "../utils/chapters";
 
-const chapters = (await getVisibleChapters()).sort(
-  (a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime(),
-);
+const chapters = (await getVisibleChapters()).sort((a, b) => {
+  const byDate = b.data.publishedAt.getTime() - a.data.publishedAt.getTime();
+  return byDate || a.id.localeCompare(b.id);
+});
+
+const covers = chapters.map((chapter) => {
+  const storyText = readMarkdownBody(
+    join(resolve(resolveChaptersDir()), chapter.id, "story.md"),
+  );
+  if (storyText === undefined) {
+    throw new Error(`篇章 ${chapter.id} 找不到 story.md（故事開場口述稿）。`);
+  }
+  const anchor = resolveAnchorPhoto(
+    chapter.id,
+    chapter.data.family.anchorImage,
+    chapter.data.images,
+    chapter.body ?? "",
+  );
+  const sentence = coverSentence(chapter.data.title);
+  return {
+    id: chapter.id,
+    title: chapter.data.title,
+    ...sentence,
+    src: anchor.src,
+    alt: anchor.alt,
+    caption: anchor.image.caption ?? anchor.alt,
+    credit: creditSegments(anchor.image),
+    adult: adultReadingMinutes(chapter.body ?? ""),
+    family: familyTotalMinutes(storyText, chapter.data.family.activity.minutes),
+    href: `/chapters/${chapter.id}/`,
+  };
+});
+
+const steps = [
+  {
+    line: "先讀大人的正文。",
+    note: "主張寫在正文裡，每條都標了證據等級。",
+  },
+  {
+    line: "或先唸一段故事。",
+    note: "照稿唸完，中間不用停下來提問。",
+  },
+  {
+    line: "再看著照片聊。",
+    note: "只看實物照片，問看到、覺得、好奇。",
+  },
+  {
+    line: "然後在家裡做。",
+    note: "材料在家裡找，大人要在場。",
+  },
+];
+
+const bandPhoto = covers[covers.length - 1];
+
+const pickCss = covers
+  .map(
+    (cover) =>
+      `body:has(#cover-${cover.id}:checked) [data-hero="${cover.id}"]{display:flex}
+body:has(#cover-${cover.id}:checked) [data-zoom="${cover.id}"]{display:grid}
+body:has(#cover-${cover.id}:checked) [data-list]{display:none}
+body:has(#cover-${cover.id}:checked) [data-list="${cover.id}"]{display:block}`,
+  )
+  .join("\n");
 ---
 
 <Base
+  cover
   title="CarlWonder"
   description="用精彩敘事探索世界奇異知識，每篇查核來源，附親子共學。"
 >
-  <h1>CarlWonder</h1>
   {
-    chapters.length === 0 ? (
-      <p>篇章準備中。</p>
+    covers.length === 0 ? (
+      <p class="page-column">篇章準備中。</p>
     ) : (
-      <ul aria-label="篇章清單">
-        {chapters.map((chapter) => (
-          <li>
-            <a href={`/chapters/${chapter.id}/`}>{chapter.data.title}</a>
-            <p>{chapter.data.summary}</p>
-          </li>
+      <>
+        <style set:html={pickCss} />
+        {covers.map((cover, index) => (
+          <section
+            class="hero"
+            data-hero={cover.id}
+            id={index === 0 ? "top" : undefined}
+          >
+            <header class="hero__bar">
+              <a class="wordmark" href="/">
+                CarlWonder
+              </a>
+              <nav class="hero__nav" aria-label="這一篇的兩種讀法">
+                <a href={`${cover.href}#reading`}>深入正文</a>
+                <a href={`${cover.href}#family`}>親子共學</a>
+              </nav>
+            </header>
+            <div class="hero__mid">
+              <h1 class="sentence">
+                <span class="sentence__words">{cover.before}</span>
+                <span class="sentence__slot shutter">
+                  <Image
+                    src={cover.src}
+                    alt=""
+                    widths={[480, 960, 1400]}
+                    sizes="(max-width: 700px) 92vw, 40vw"
+                    loading={index === 0 ? "eager" : "lazy"}
+                  />
+                </span>
+                <span class="sentence__words">{cover.after}</span>
+              </h1>
+              <p class="support" data-reveal>
+                大人約 {cover.adult} 分鐘，親子共學約 {cover.family} 分鐘。
+              </p>
+              <a class="button" href={cover.href}>
+                讀這一篇
+              </a>
+            </div>
+          </section>
         ))}
-      </ul>
+
+        {covers.map((cover) => (
+          <section class="zoom" data-zoom={cover.id} aria-label={cover.title}>
+            <h2 class="zoom__line">
+              {cover.before}
+              <br />
+              {cover.after}
+            </h2>
+            <div class="zoom__frame" data-reveal>
+              <Image
+                src={cover.src}
+                alt={cover.alt}
+                widths={[640, 960, 1400]}
+                sizes="(max-width: 700px) 92vw, 36vw"
+                loading="lazy"
+              />
+            </div>
+            <div class="zoom__detail" data-reveal>
+              <Image
+                src={cover.src}
+                alt=""
+                widths={[480, 800]}
+                sizes="16rem"
+                loading="lazy"
+              />
+            </div>
+            <div class="zoom__caption" data-reveal>
+              <p>{cover.caption}</p>
+              <p class="credit">
+                {cover.credit.map(({ text, href }) =>
+                  href ? <a href={href}>{text}</a> : text,
+                )}
+              </p>
+            </div>
+          </section>
+        ))}
+
+        <section class="list">
+          <h2 data-reveal>現在能讀的問題</h2>
+          {covers.map((cover) => (
+            <div class="list__photo" data-list={cover.id} data-reveal>
+              <Image
+                src={cover.src}
+                alt={cover.alt}
+                widths={[480, 800]}
+                sizes="(max-width: 700px) 60vw, 22vw"
+                loading="lazy"
+              />
+            </div>
+          ))}
+          <p class="list__name">篇章</p>
+          <div class="list__rows">
+            {covers.map((cover, index) => (
+              <label class="row" data-reveal>
+                <input
+                  type="radio"
+                  name="cover"
+                  id={`cover-${cover.id}`}
+                  checked={index === 0}
+                />
+                <a href={cover.href}>{cover.title}</a>
+                <span class="row__times">
+                  <span>大人 {cover.adult} 分鐘</span>
+                  <span>親子 {cover.family} 分鐘</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </section>
+
+        {bandPhoto && (
+          <figure class="band">
+            <Image
+              src={bandPhoto.src}
+              alt={bandPhoto.alt}
+              widths={[800, 1400, 2000]}
+              sizes="100vw"
+              loading="lazy"
+            />
+            <figcaption>
+              {bandPhoto.credit.map(({ text, href }) =>
+                href ? <a href={href}>{text}</a> : text,
+              )}
+            </figcaption>
+          </figure>
+        )}
+
+        <section class="steps" aria-label="一篇怎麼讀">
+          <div class="steps__lines">
+            {steps.map((step, index) =>
+              index === 0 ? (
+                <div class="step" data-reveal>
+                  <h2>{step.line}</h2>
+                  <p>{step.note}</p>
+                </div>
+              ) : (
+                <div class="step" data-reveal>
+                  <p class="step__line">{step.line}</p>
+                  <p>{step.note}</p>
+                </div>
+              ),
+            )}
+          </div>
+          {covers[0] && (
+            <figure class="steps__object" data-reveal>
+              <Image
+                src={covers[0].src}
+                alt={covers[0].alt}
+                widths={[640, 960, 1400]}
+                sizes="(max-width: 700px) 92vw, 36vw"
+                loading="lazy"
+              />
+              <figcaption class="credit">
+                {covers[0].credit.map(({ text, href }) =>
+                  href ? <a href={href}>{text}</a> : text,
+                )}
+              </figcaption>
+            </figure>
+          )}
+        </section>
+
+        <footer class="issue-footer">
+          <div class="issue-footer__top">
+            <p>用精彩敘事探索世界奇異知識，每篇查核來源，附親子共學。</p>
+            <a href="#top">回到頂端</a>
+          </div>
+          <p class="proof">
+            一篇裡的主張分成
+            {EVIDENCE_LEVELS.map((level, index) => (
+              <>
+                <span class:list={{ "is-lit": index === 0 }} data-level>
+                  {EVIDENCE_LEVEL_LABELS[level]}
+                </span>
+                {index < EVIDENCE_LEVELS.length - 1 ? "、" : "。"}
+              </>
+            ))}
+          </p>
+          <a class="issue-footer__name" href="/">
+            CarlWonder
+          </a>
+          <div class="issue-footer__meta">
+            <a href="/">首頁</a>
+            <span>非營利</span>
+            <span>2026</span>
+          </div>
+        </footer>
+      </>
     )
   }
 </Base>
+
+<script>
+  const levels = [...document.querySelectorAll<HTMLElement>("[data-level]")];
+  if (levels.length > 1) {
+    let lit = 0;
+    window.setInterval(() => {
+      lit = (lit + 1) % levels.length;
+      levels.forEach((level, index) =>
+        level.classList.toggle("is-lit", index === lit),
+      );
+    }, 2000);
+  }
+
+  const reveal = document.querySelectorAll<HTMLElement>("[data-reveal]");
+  const mark = (element: HTMLElement) => element.classList.add("is-in");
+  if ("IntersectionObserver" in window) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          mark(entry.target as HTMLElement);
+          observer.unobserve(entry.target);
+        }
+      },
+      { rootMargin: "0px 0px -12% 0px", threshold: 0.1 },
+    );
+    reveal.forEach((element) => observer.observe(element));
+  } else {
+    reveal.forEach(mark);
+  }
+  window.setTimeout(() => reveal.forEach(mark), 2500);
+</script>
+
+<style is:global>
+  [data-hero],
+  [data-zoom] {
+    display: none;
+  }
+
+  .hero {
+    flex-direction: column;
+    min-height: 100svh;
+    padding: 1.75rem;
+  }
+
+  .hero__bar,
+  .hero__nav {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .hero__nav a {
+    color: var(--ink);
+    font-size: var(--step-small);
+    text-decoration: none;
+  }
+
+  .hero__mid {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1.75rem;
+  }
+
+  .sentence {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.35em;
+    margin: 0;
+    font-size: clamp(2.6rem, 5.6vw, 6.75rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 0.95;
+  }
+
+  .sentence__words {
+    white-space: nowrap;
+  }
+
+  .sentence__slot {
+    display: block;
+    width: max-content;
+    max-width: 100%;
+    justify-self: start;
+  }
+
+  .sentence__slot img {
+    display: block;
+    width: auto;
+    height: min(42vh, 26rem);
+    max-width: 100%;
+    object-fit: contain;
+  }
+
+  .zoom__frame img,
+  .zoom__detail img,
+  .list__photo img,
+  .band img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .support {
+    max-width: 22em;
+    margin: 0 auto 2rem;
+    font-size: var(--step-lead);
+    line-height: 1.45;
+    text-align: center;
+    text-wrap: balance;
+  }
+
+  .button {
+    align-self: center;
+  }
+
+  .zoom {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 1.5rem 1rem;
+    align-items: center;
+    min-height: 0;
+    margin: 0;
+    padding: 7rem 1.75rem 5rem;
+  }
+
+  .zoom__line {
+    grid-column: 1 / 6;
+    grid-row: 1;
+    margin: 0;
+    font-size: var(--step-head);
+    line-height: 1.05;
+  }
+
+  .zoom__frame {
+    grid-column: 6 / 13;
+    grid-row: 1 / span 2;
+    aspect-ratio: 4 / 5;
+    max-height: 68vh;
+    overflow: hidden;
+  }
+
+  .zoom__detail {
+    grid-column: 1 / 4;
+    grid-row: 2;
+    aspect-ratio: 1;
+    overflow: hidden;
+  }
+
+  .zoom__detail img {
+    transform: scale(1.8);
+    transform-origin: 50% 40%;
+  }
+
+  .zoom__caption {
+    grid-column: 1 / 6;
+    grid-row: 3;
+    max-width: 36ch;
+    font-size: var(--step-body);
+  }
+
+  .zoom__caption p,
+  .credit {
+    margin: 0 0 0.75rem;
+  }
+
+  .credit {
+    color: var(--muted);
+    font-size: var(--step-small);
+  }
+
+  .list {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 1.5rem 1rem;
+    align-items: end;
+    padding: 6rem 1.75rem;
+    background: var(--surface);
+  }
+
+  .list h2 {
+    grid-column: 1 / -1;
+    margin: 0 0 4rem;
+    font-size: clamp(2rem, 4.5vw, 4.25rem);
+    line-height: 0.98;
+    text-indent: 3vw;
+  }
+
+  .list__photo {
+    display: none;
+    grid-column: 1 / 5;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+  }
+
+  .list__name {
+    grid-column: 5 / 6;
+    margin: 0;
+    color: var(--muted);
+    font-size: var(--step-small);
+  }
+
+  .list__rows {
+    grid-column: 6 / 13;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.75rem 1.5rem;
+    align-items: baseline;
+    margin: 0;
+    padding-block: 0.85rem;
+    cursor: pointer;
+  }
+
+  .row__times {
+    display: flex;
+    gap: 1.25rem;
+    color: var(--muted);
+    font-size: var(--step-body);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .row input {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin: 0;
+    accent-color: var(--accent);
+  }
+
+  .row a {
+    color: var(--ink);
+    font-size: var(--step-lead);
+    line-height: 1.25;
+    text-decoration: none;
+  }
+
+  .row:has(input:checked) a {
+    font-weight: 700;
+  }
+
+  .band {
+    margin: 0;
+  }
+
+  .band img {
+    height: 42vw;
+    min-height: 16rem;
+    max-height: 70vh;
+  }
+
+  .band figcaption {
+    padding: 0.75rem 1.75rem 0;
+    color: var(--muted);
+    font-size: var(--step-small);
+  }
+
+  .steps {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(16rem, 0.85fr);
+    gap: 3rem;
+    align-items: end;
+    padding: 6rem 1.75rem 7rem;
+  }
+
+  .steps__lines {
+    display: grid;
+    gap: 2.5rem;
+  }
+
+  .step h2,
+  .step__line {
+    margin: 0;
+    font-size: clamp(2rem, 4.5vw, 4.25rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+
+  .step p:last-child {
+    margin: 0.75rem 0 0;
+    max-width: 34ch;
+    color: var(--muted);
+    font-size: var(--step-body);
+  }
+
+  .step:nth-child(2) {
+    margin-left: 8%;
+  }
+
+  .step:nth-child(3) {
+    margin-left: 16%;
+  }
+
+  .step:nth-child(4) {
+    margin-left: 24%;
+  }
+
+  .steps__object {
+    margin: 0;
+  }
+
+  .steps__object img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+  }
+
+  .proof {
+    max-width: none;
+    margin: 4rem 0 0;
+    color: var(--field-muted);
+    font-size: clamp(2rem, 4.5vw, 4.25rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+  }
+
+  .proof .is-lit {
+    color: var(--field-ink);
+    transition: color 400ms ease;
+  }
+
+  .issue-footer {
+    display: flex;
+    flex-direction: column;
+    padding: 4rem 1.75rem 1.5rem;
+    background: var(--field);
+    color: var(--field-ink);
+  }
+
+  .issue-footer a {
+    color: var(--field-ink);
+  }
+
+  .issue-footer__top {
+    display: flex;
+    justify-content: space-between;
+    gap: 2rem;
+    align-items: baseline;
+  }
+
+  .issue-footer__top p {
+    max-width: 36rem;
+    margin: 0;
+    font-size: var(--step-small);
+  }
+
+  .issue-footer__name {
+    margin-top: 6rem;
+    font-size: clamp(2.5rem, 8vw, 8rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 0.9;
+    text-decoration: none;
+  }
+
+  .issue-footer__meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1rem;
+    font-size: var(--step-small);
+  }
+
+  .js [data-reveal] {
+    opacity: 0;
+    transform: translateY(1.25rem);
+    transition:
+      opacity var(--t-reveal) var(--ease-out),
+      transform var(--t-reveal) var(--ease-out);
+  }
+
+  .js [data-reveal].is-in {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .js .shutter {
+      animation: shutter 1.1s var(--ease-in-out) both;
+    }
+
+    .js .shutter img {
+      animation: settle 1.5s var(--ease-soft) both;
+    }
+  }
+
+  @keyframes shutter {
+    from {
+      clip-path: inset(0 0 100% 0);
+    }
+    to {
+      clip-path: inset(0);
+    }
+  }
+
+  @keyframes settle {
+    from {
+      transform: scale(1.12);
+    }
+    to {
+      transform: none;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .hero__nav a:first-child {
+      display: none;
+    }
+
+    .hero__mid {
+      gap: 2rem;
+    }
+
+    .zoom,
+    .list {
+      grid-template-columns: 1fr;
+      padding-inline: 1rem;
+    }
+
+    .zoom__line,
+    .zoom__frame,
+    .zoom__detail,
+    .zoom__caption,
+    .list h2,
+    .list__photo,
+    .list__name,
+    .list__rows {
+      grid-column: 1;
+      grid-row: auto;
+    }
+
+    .list h2 {
+      text-indent: 0;
+    }
+
+    .list__name {
+      display: none;
+    }
+
+    .row {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .row__times {
+      grid-column: 2;
+      flex-wrap: wrap;
+      gap: 0.35rem 1rem;
+      white-space: normal;
+    }
+
+    .steps {
+      grid-template-columns: 1fr;
+    }
+
+    .proof {
+      font-size: 1.5rem;
+    }
+
+    .step:nth-child(2),
+    .step:nth-child(3),
+    .step:nth-child(4) {
+      margin-left: 0;
+    }
+
+    .step:nth-child(2) {
+      margin-left: 6vw;
+    }
+
+    .step:nth-child(3) {
+      margin-left: 12vw;
+    }
+
+    .step:nth-child(4) {
+      margin-left: 18vw;
+    }
+
+    .issue-footer__top,
+    .issue-footer__meta {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
+  @media (min-width: 701px) {
+    .hero {
+      position: relative;
+    }
+
+    .hero__mid {
+      width: min(54%, 38rem);
+      margin-right: auto;
+      justify-content: center;
+    }
+
+    .sentence__slot {
+      position: absolute;
+      top: 50%;
+      right: 1.75rem;
+      width: min(40vw, 34rem);
+      transform: translateY(-50%);
+    }
+
+    .sentence__slot img {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 1;
+      object-fit: cover;
+      object-position: center;
+    }
+
+    .support,
+    .button {
+      align-self: flex-start;
+      margin-left: 0;
+      margin-right: 0;
+      text-align: left;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .js [data-reveal] {
+      opacity: 1;
+      transform: none;
+    }
+  }
+</style>

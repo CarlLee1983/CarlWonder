@@ -74,12 +74,12 @@ const cells = [
     display: block;
     width: 100%;
     height: auto;
-    border-radius: 0.5rem;
+    border-radius: 0;
   }
 
   .observation-card__credit {
     margin: 0.4rem 0 0;
-    color: #5a4c33;
+    color: var(--muted);
     font-size: 0.8125rem;
     line-height: 1.6;
   }
@@ -94,7 +94,7 @@ const cells = [
     flex-direction: column;
     padding: 1rem;
     border-radius: 0.75rem;
-    background: #fff;
+    background: var(--surface);
   }
 
   .cell h4 {
@@ -110,16 +110,14 @@ const cells = [
   .cell__older {
     margin-top: auto;
     padding-top: 0.75rem;
-    border-top: 1px dashed #c9b88c;
-    color: #5a4c33;
+    color: var(--muted);
     font-size: 0.9375rem;
   }
 
   .observation-card__tips {
     margin-top: 1rem;
     padding-top: 0.75rem;
-    border-top: 1px solid #e0d3b0;
-    color: #4a3d28;
+    color: var(--ink);
     font-size: 0.9375rem;
   }
 

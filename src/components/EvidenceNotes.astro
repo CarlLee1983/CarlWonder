@@ -57,6 +57,14 @@ const rows = notes.map((note, index) => ({
 </section>
 
 <style>
+  .evidence h2 {
+    margin: 0 0 1.75rem;
+    font-size: clamp(2rem, 4.5vw, 4.25rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+
   .evidence-notes {
     margin: 0;
     padding: 0;
@@ -65,19 +73,21 @@ const rows = notes.map((note, index) => ({
 
   .evidence-note {
     display: grid;
-    grid-template-columns: 3.5rem 1fr;
-    gap: 0 0.75rem;
-    padding: 0.6rem 0;
-    border-top: 1px solid #e3dccb;
-    line-height: 1.7;
+    grid-template-columns: 4.5rem 1fr;
+    gap: 0.35rem 1rem;
+    align-items: baseline;
+    padding: 1.15rem 0.75rem;
+    line-height: 1.5;
   }
 
-  .evidence-note:last-child {
-    border-bottom: 1px solid #e3dccb;
+  .evidence-note:nth-child(odd) {
+    background: var(--surface);
   }
 
   .evidence-note__level {
+    font-size: var(--step-lead);
     font-weight: 700;
+    letter-spacing: -0.03em;
   }
 
   .evidence-note__refs {
@@ -94,7 +104,7 @@ const rows = notes.map((note, index) => ({
   /* 寬螢幕三欄：等級、主張、編號。 */
   @media (min-width: 40rem) {
     .evidence-note {
-      grid-template-columns: 4rem 1fr 7rem;
+      grid-template-columns: 5.5rem 1fr 7rem;
     }
 
     .evidence-note__refs {
