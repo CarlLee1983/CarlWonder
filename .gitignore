@@ -3,3 +3,4 @@ dist/
 .astro/
 .scratch/
 .DS_Store
+.claude/worktrees/
