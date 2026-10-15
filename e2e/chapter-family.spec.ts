@@ -92,7 +92,7 @@ test.describe("親子共學區段", () => {
       const background = await family(page).evaluate(
         (el) => getComputedStyle(el).backgroundColor,
       );
-      expect(background).toBe("rgb(244, 244, 244)");
+      expect(background).toBe("rgb(238, 236, 226)");
       const box = (await family(page).boundingBox())!;
       expect(box.x).toBe(0);
       expect(box.width).toBe(width);

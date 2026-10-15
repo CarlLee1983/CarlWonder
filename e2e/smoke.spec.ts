@@ -37,3 +37,18 @@ test("首頁與篇章頁無 axe 違規", async ({ page }) => {
   await page.goto("/chapters/sample-chapter/");
   await expectNoAxeViolations(page, "篇章頁");
 });
+
+test("首頁在手機與平板不橫向溢出，鍵盤可跳至主要內容", async ({ page }) => {
+  for (const width of [390, 768]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/");
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(width);
+  }
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("link", { name: "跳至主要內容" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("main")).toBeFocused();
+});
