@@ -85,14 +85,14 @@ test.describe("親子共學區段", () => {
     await expect(page.locator(".story-card__text p")).toHaveCount(6);
   });
 
-  test("暖色底鋪滿整區的寬度", async ({ page }) => {
+  test("底色鋪滿整區的寬度", async ({ page }) => {
     for (const width of [1280, 375]) {
       await page.setViewportSize({ width, height: 800 });
       await page.goto(PATH);
       const background = await family(page).evaluate(
         (el) => getComputedStyle(el).backgroundColor,
       );
-      expect(background).toBe("rgb(242, 223, 174)");
+      expect(background).toBe("rgb(238, 236, 226)");
       const box = (await family(page).boundingBox())!;
       expect(box.x).toBe(0);
       expect(box.width).toBe(width);

@@ -18,7 +18,7 @@ interface Props {
 const { family, paragraphs, storyMinutes, anchor } = Astro.props;
 ---
 
-<!-- 外層鋪滿視窗寬度（暖色底），內層 .page-column 放內容，避免用 100vw 造成水平捲動。 -->
+<!-- 外層鋪滿視窗寬度（表面色），內層 .page-column 放內容，避免用 100vw 造成水平捲動。 -->
 <section id="family" class="family" aria-labelledby="family-heading">
   <div class="page-column">
     <h2 id="family-heading">親子共學</h2>
@@ -41,41 +41,41 @@ const { family, paragraphs, storyMinutes, anchor } = Astro.props;
   .family {
     margin-top: 3rem;
     padding-bottom: 4rem;
-    background: #f2dfae;
-    color: #2a2112;
+    background: var(--surface);
+    color: var(--ink);
   }
 
   .family > .page-column {
-    padding-top: 2rem;
+    padding-top: 4.5rem;
   }
 
   .family h2 {
     margin: 0;
-    font-size: 2rem;
+    font-size: clamp(2rem, 4.5vw, 4.25rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1;
   }
 
   .family__steps {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin: 0.75rem 0 1.5rem;
+    display: grid;
+    gap: 0.35rem;
+    margin: 1.75rem 0 2.5rem;
     padding: 0;
     list-style: none;
   }
 
   .family__steps li {
-    padding: 0.25rem 0.875rem;
-    border-radius: 999px;
-    background: #fff;
-    font-size: 0.9375rem;
+    font-size: var(--step-lead);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.2;
   }
 
   .family .card {
     margin-bottom: 1.5rem;
     padding: 1.5rem;
-    border-radius: 0.875rem;
-    background: #fffaf0;
-    box-shadow: 0 3px 0 #c9a24a;
+    background: var(--bg);
   }
 
   .family .card:last-child {

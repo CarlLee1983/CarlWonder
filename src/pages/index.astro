@@ -1,29 +1,645 @@
 ---
+import { Image } from "astro:assets";
+import { join, resolve } from "node:path";
+import { coverSentence } from "../content/cover-sentence";
+import { resolveChaptersDir } from "../content/content-dir";
+import { creditSegments } from "../content/image-credit";
+import { readMarkdownBody } from "../content/markdown-files";
+import {
+  adultReadingMinutes,
+  familyTotalMinutes,
+} from "../content/reading-time";
+import { resolveAnchorPhoto } from "../content/anchor-image";
+import {
+  EVIDENCE_LEVELS,
+  EVIDENCE_LEVEL_LABELS,
+} from "../content/evidence-levels";
 import Base from "../layouts/Base.astro";
 import { getVisibleChapters } from "../utils/chapters";
 
-const chapters = (await getVisibleChapters()).sort(
-  (a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime(),
-);
+const chapters = (await getVisibleChapters()).sort((a, b) => {
+  const byDate = b.data.publishedAt.getTime() - a.data.publishedAt.getTime();
+  return byDate || a.id.localeCompare(b.id);
+});
+
+const covers = chapters.map((chapter) => {
+  const storyText = readMarkdownBody(
+    join(resolve(resolveChaptersDir()), chapter.id, "story.md"),
+  );
+  if (storyText === undefined) {
+    throw new Error(`篇章 ${chapter.id} 找不到 story.md（故事開場口述稿）。`);
+  }
+  const anchor = resolveAnchorPhoto(
+    chapter.id,
+    chapter.data.family.anchorImage,
+    chapter.data.images,
+    chapter.body ?? "",
+  );
+  const sentence = coverSentence(chapter.data.title);
+  return {
+    id: chapter.id,
+    title: chapter.data.title,
+    ...sentence,
+    src: anchor.src,
+    alt: anchor.alt,
+    caption: anchor.image.caption ?? anchor.alt,
+    credit: creditSegments(anchor.image),
+    adult: adultReadingMinutes(chapter.body ?? ""),
+    family: familyTotalMinutes(storyText, chapter.data.family.activity.minutes),
+    href: `/chapters/${chapter.id}/`,
+  };
+});
+
+const steps = [
+  {
+    line: "先讀大人的正文。",
+    note: "主張寫在正文裡，每條都標了證據等級。",
+  },
+  {
+    line: "或先唸一段故事。",
+    note: "照稿唸完，中間不用停下來提問。",
+  },
+  {
+    line: "再看著照片聊。",
+    note: "只看實物照片，問看到、覺得、好奇。",
+  },
+  {
+    line: "然後在家裡做。",
+    note: "材料在家裡找，大人要在場。",
+  },
+];
+
+const pickCss = covers
+  .map(
+    (cover) =>
+      `body:has(#cover-${cover.id}:checked) [data-hero="${cover.id}"]{display:flex}
+body:has(#cover-${cover.id}:checked) [data-list]{display:none}
+body:has(#cover-${cover.id}:checked) [data-list="${cover.id}"]{display:block}`,
+  )
+  .join("\n");
 ---
 
 <Base
+  cover
   title="CarlWonder"
   description="用精彩敘事探索世界奇異知識，每篇查核來源，附親子共學。"
 >
-  <h1>CarlWonder</h1>
   {
-    chapters.length === 0 ? (
-      <p>篇章準備中。</p>
+    covers.length === 0 ? (
+      <p class="page-column">篇章準備中。</p>
     ) : (
-      <ul aria-label="篇章清單">
-        {chapters.map((chapter) => (
-          <li>
-            <a href={`/chapters/${chapter.id}/`}>{chapter.data.title}</a>
-            <p>{chapter.data.summary}</p>
-          </li>
+      <>
+        <div id="top" />
+        <style set:html={pickCss} />
+        {covers.map((cover, index) => (
+          <section class="hero" data-hero={cover.id}>
+            <header class="hero__bar">
+              <a class="wordmark" href="/">
+                CarlWonder
+              </a>
+              <nav class="hero__nav" aria-label="篇章導覽">
+                <a href="#chapters">探索篇章</a>
+                <a href={`${cover.href}#reading`}>深入正文</a>
+                <a href={`${cover.href}#family`}>親子共學</a>
+              </nav>
+            </header>
+            <div class="hero__mid">
+              <p class="hero__eyebrow">
+                奇異知識筆記 <span>從古文明開始</span>
+              </p>
+              <h1 class="sentence">
+                <span class="sentence__words">{cover.before}</span>
+                <span class="sentence__slot">
+                  <Image
+                    src={cover.src}
+                    alt=""
+                    widths={[480, 960, 1400]}
+                    sizes="(max-width: 800px) 92vw, 44vw"
+                    loading={index === 0 ? "eager" : "lazy"}
+                  />
+                </span>
+                <span class="sentence__words">{cover.after}</span>
+              </h1>
+              <p class="hero__intro">
+                世界留下線索，我們一起追問。
+                <br />
+                從實物出發，讀懂證據，也留一點好奇。
+              </p>
+              <p class="support">
+                大人約 {cover.adult} 分鐘，親子共學約 {cover.family} 分鐘。
+              </p>
+              <a class="button" href={cover.href}>
+                讀這一篇 <span aria-hidden="true">↗</span>
+              </a>
+            </div>
+            <div class="hero__caption">
+              <p>{cover.caption}</p>
+              <p class="credit">
+                {cover.credit.map(({ text, href }) =>
+                  href ? <a href={href}>{text}</a> : text,
+                )}
+              </p>
+            </div>
+          </section>
         ))}
-      </ul>
+
+        <section class="list" id="chapters" aria-labelledby="chapters-heading">
+          <div class="list__heading">
+            <>
+              <p class="eyebrow">
+                篇章目錄 · {String(covers.length).padStart(2, "0")}
+              </p>
+              <h2 id="chapters-heading">現在能讀的問題</h2>
+              <p>選一個好奇的起點，往裡面走。</p>
+            </>
+          </div>
+          {covers.map((cover) => (
+            <div class="list__photo" data-list={cover.id}>
+              <Image
+                src={cover.src}
+                alt={cover.alt}
+                widths={[480, 800]}
+                sizes="(max-width: 700px) 60vw, 22vw"
+                loading="lazy"
+              />
+            </div>
+          ))}
+          <p class="list__name">篇章</p>
+          <div class="list__rows">
+            {covers.map((cover, index) => (
+              <label class="row">
+                <input
+                  type="radio"
+                  name="cover"
+                  id={`cover-${cover.id}`}
+                  checked={index === 0}
+                  aria-label={`預覽封面：${cover.title}`}
+                />
+                <a href={cover.href}>{cover.title}</a>
+                <span class="row__times">
+                  <span>大人 {cover.adult} 分鐘</span>
+                  <span>親子 {cover.family} 分鐘</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </section>
+
+        <section class="steps" aria-label="一篇怎麼讀">
+          <div class="steps__lines">
+            {steps.map((step, index) =>
+              index === 0 ? (
+                <div class="step">
+                  <h2>{step.line}</h2>
+                  <p>{step.note}</p>
+                </div>
+              ) : (
+                <div class="step">
+                  <p class="step__line">{step.line}</p>
+                  <p>{step.note}</p>
+                </div>
+              ),
+            )}
+          </div>
+          {covers[0] && (
+            <figure class="steps__object">
+              <Image
+                src={covers[0].src}
+                alt={covers[0].alt}
+                widths={[640, 960, 1400]}
+                sizes="(max-width: 700px) 92vw, 36vw"
+                loading="lazy"
+              />
+              <figcaption class="credit">
+                {covers[0].credit.map(({ text, href }) =>
+                  href ? <a href={href}>{text}</a> : text,
+                )}
+              </figcaption>
+            </figure>
+          )}
+        </section>
+
+        <footer class="issue-footer">
+          <div class="issue-footer__top">
+            <p>用精彩敘事探索世界奇異知識，每篇查核來源，附親子共學。</p>
+            <a href="#top">回到頂端</a>
+          </div>
+          <p class="proof">
+            一篇裡的主張分成
+            {EVIDENCE_LEVELS.map((level, index) => (
+              <>
+                <span>{EVIDENCE_LEVEL_LABELS[level]}</span>
+                {index < EVIDENCE_LEVELS.length - 1 ? "、" : "。"}
+              </>
+            ))}
+          </p>
+          <a class="issue-footer__name" href="/">
+            CarlWonder
+          </a>
+          <div class="issue-footer__meta">
+            <a href="/">首頁</a>
+            <span>非營利</span>
+            <span>2026</span>
+          </div>
+        </footer>
+      </>
     )
   }
 </Base>
+
+<style is:global>
+  [data-hero] {
+    display: none;
+  }
+  .hero,
+  .list,
+  .steps,
+  .issue-footer {
+    padding-inline: max(1.5rem, calc((100vw - 1280px) / 2));
+  }
+  .hero {
+    flex-direction: column;
+    padding-top: 1.5rem;
+    padding-bottom: 4rem;
+  }
+  .hero__bar,
+  .hero__nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.75rem;
+  }
+  .hero__bar {
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .hero .wordmark {
+    font-family: Georgia, serif;
+    font-size: 1.75rem;
+    font-weight: 400;
+    letter-spacing: -0.06em;
+  }
+  .hero__nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    color: var(--ink);
+    font-size: var(--step-small);
+    text-decoration: none;
+    transition: color 180ms ease;
+  }
+  .hero__mid {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 42rem;
+    padding-block: 4rem;
+    padding-right: 53%;
+  }
+  .hero__eyebrow,
+  .eyebrow {
+    margin: 0 0 2rem;
+    color: var(--accent);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+  }
+  .hero__eyebrow span {
+    margin-left: 1rem;
+    padding-left: 1rem;
+    border-left: 1px solid var(--rule);
+    color: var(--muted);
+    font-weight: 400;
+  }
+  .sentence {
+    margin: 0;
+    font-size: clamp(2.5rem, 4.2vw, 4.5rem);
+    line-height: 1.4;
+    font-weight: 600;
+    letter-spacing: -0.045em;
+  }
+  .sentence__words {
+    display: block;
+    overflow-wrap: anywhere;
+  }
+  .sentence__slot {
+    position: absolute;
+    right: 0;
+    top: 3rem;
+    bottom: 1rem;
+    width: 46%;
+    background: var(--surface);
+  }
+  .sentence__slot img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .hero__intro {
+    margin: 2rem 0 1rem;
+    color: var(--muted);
+    font-size: 1rem;
+    line-height: 1.9;
+    text-wrap: pretty;
+  }
+  .support {
+    margin: 0 0 1.75rem;
+    color: var(--muted);
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .hero .button {
+    gap: 3rem;
+    padding: 0.85rem 1.25rem;
+    font-size: 0.9375rem;
+  }
+  .hero__caption {
+    margin-left: 54%;
+    max-width: 40em;
+    color: var(--muted);
+    font-size: 0.8125rem;
+    line-height: 1.8;
+  }
+  .hero__caption p {
+    margin: 0.5rem 0 0;
+  }
+  .credit {
+    color: var(--muted);
+    font-size: 0.75rem;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+  }
+  .credit a {
+    color: inherit;
+    text-underline-offset: 3px;
+  }
+  .list {
+    display: grid;
+    grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.6fr);
+    gap: 2rem 4rem;
+    padding-block: 4rem 5rem;
+    background: var(--surface);
+    scroll-margin-top: 1rem;
+  }
+  .list__heading {
+    grid-column: 1 / -1;
+    margin-bottom: 1rem;
+  }
+  .list__heading .eyebrow {
+    margin-bottom: 0.75rem;
+  }
+  .list h2 {
+    margin: 0;
+    font-size: clamp(2rem, 3.2vw, 3rem);
+  }
+  .list__heading > p:last-child {
+    color: var(--muted);
+    font-size: 0.9375rem;
+  }
+  .list__photo {
+    background: var(--bg);
+    display: none;
+    aspect-ratio: 1;
+  }
+  .list__photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .list__name {
+    display: none;
+  }
+  .list__rows {
+    align-self: start;
+    border-top: 1px solid var(--rule);
+  }
+  .row {
+    cursor: pointer;
+    display: grid;
+    grid-template-columns: 2.75rem minmax(0, 1fr);
+    align-items: center;
+    gap: 0.25rem 0.75rem;
+    padding: 1.4rem 0;
+    border-bottom: 1px solid var(--rule);
+    transition: background-color 180ms ease;
+  }
+  .row input {
+    appearance: none;
+    display: grid;
+    place-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    margin: 0;
+    cursor: pointer;
+  }
+  .row input::before {
+    content: "";
+    width: 0.75rem;
+    height: 0.75rem;
+    border: 1px solid var(--muted);
+    border-radius: 50%;
+  }
+  .row input:checked::before {
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: inset 0 0 0 3px var(--surface);
+  }
+  .row a {
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-size: clamp(1.125rem, 1.7vw, 1.5rem);
+    font-weight: 500;
+    text-decoration: none;
+    line-height: 1.65;
+  }
+  .row:has(input:checked) a {
+    color: var(--accent);
+  }
+  .row__times {
+    grid-column: 2;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    color: var(--muted);
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .steps {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 5rem;
+    align-items: center;
+    padding-block: 6rem;
+  }
+  .steps__lines {
+    display: grid;
+    gap: 2rem;
+    counter-reset: reading;
+  }
+  .step {
+    position: relative;
+    padding-left: 3rem;
+    counter-increment: reading;
+  }
+  .step::before {
+    content: "0" counter(reading);
+    position: absolute;
+    left: 0;
+    top: 0.3rem;
+    font-family: Georgia, serif;
+    color: var(--accent);
+    font-size: 1rem;
+  }
+  .step h2,
+  .step__line {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 2.4vw, 2.25rem);
+    font-weight: 500;
+    line-height: 1.5;
+  }
+  .step p:last-child {
+    margin: 0.5rem 0 0;
+    color: var(--muted);
+    font-size: 0.9375rem;
+  }
+  .steps__object {
+    margin: 0;
+  }
+  .steps__object img {
+    background: var(--surface);
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 5;
+    object-fit: contain;
+  }
+  .steps__object figcaption {
+    margin-top: 0.75rem;
+  }
+  .issue-footer {
+    padding-block: 3rem 1.5rem;
+    background: var(--surface);
+    border-top: 1px solid var(--rule);
+  }
+  .issue-footer a {
+    color: var(--ink);
+    text-underline-offset: 4px;
+  }
+  .issue-footer__top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 2rem;
+    font-size: 0.8125rem;
+  }
+  .issue-footer__top p {
+    max-width: 32em;
+    margin: 0;
+    color: var(--muted);
+  }
+  .proof {
+    max-width: 28em;
+    margin: 2rem 0;
+    color: var(--muted);
+    font-family: var(--font-display);
+    font-size: clamp(1.25rem, 2.4vw, 2rem);
+    line-height: 1.7;
+  }
+  .proof span {
+    color: var(--accent);
+  }
+  .issue-footer__name {
+    display: block;
+    margin-top: 3rem;
+    font-family: Georgia, serif;
+    font-size: clamp(3.5rem, 11vw, 10rem);
+    letter-spacing: -0.07em;
+    line-height: 1.1;
+    text-decoration: none;
+  }
+  .issue-footer__meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--rule);
+    color: var(--muted);
+    font-size: 0.75rem;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .hero__nav a:hover,
+    .row a:hover {
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 5px;
+    }
+    .row:hover {
+      background: var(--bg);
+    }
+  }
+  @media (max-width: 800px) {
+    .hero,
+    .list,
+    .steps,
+    .issue-footer {
+      padding-inline: 1.25rem;
+    }
+    .hero__bar {
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .hero__nav {
+      gap: 1.25rem;
+    }
+    .hero__mid {
+      min-height: 0;
+      padding: 2.5rem 0 0;
+    }
+    .hero__eyebrow {
+      margin-bottom: 1.25rem;
+    }
+    .sentence {
+      width: 100%;
+      font-size: clamp(2rem, 6.5vw, 3.5rem);
+    }
+    .sentence__slot {
+      position: static;
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 4 / 3;
+      margin-block: 1.25rem;
+    }
+    .hero__intro {
+      margin-top: 1.5rem;
+    }
+    .hero__caption {
+      margin: 1.5rem 0 0;
+    }
+    .list {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      padding-block: 3rem;
+    }
+    .list__photo {
+      background: var(--bg);
+      max-width: 16rem;
+    }
+    .steps {
+      grid-template-columns: 1fr;
+      gap: 2.5rem;
+      padding-block: 3.5rem;
+    }
+    .steps__object img {
+      background: var(--surface);
+      aspect-ratio: 4 / 3;
+    }
+    .issue-footer__top {
+      flex-direction: column;
+      gap: 1rem;
+    }
+  }
+</style>
