@@ -15,7 +15,7 @@
     "preview": "astro preview",
     "check": "pnpm format:check && astro check && pnpm build",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
-    "build:e2e": "CHAPTERS_DIR=tests/fixtures/chapters pnpm build",
+    "build:e2e": "CHAPTERS_DIR=tests/fixtures/chapters RESEARCH_DIR=tests/fixtures/research pnpm build",
     "test:e2e": "pnpm build:e2e && playwright test",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

@@ -1,70 +1,32 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import {
-  cpSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { after, describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 import type { Issue } from "../src/content-checks/issue.ts";
 import { runContentChecks } from "../src/content-checks/run.ts";
+import {
+  cleanupScenarios,
+  FIXTURE_IMAGES,
+  draftSlug,
+  fixtureResearch,
+  fixtures,
+  makeTempDir,
+  mentions,
+  scenario,
+  slug,
+} from "./scenario.ts";
 
-// 通過情境就是 e2e 用的固定資料篇章（兩篇都必須通過），fixture 只維護這一份。
-const fixtures = fileURLToPath(new URL("./fixtures/chapters", import.meta.url));
 const cli = fileURLToPath(
   new URL("../scripts/check-content.ts", import.meta.url),
 );
-const slug = "sample-chapter";
-const draftSlug = "draft-sample";
-const workDirs: string[] = [];
-
-/** 把通過情境複製到暫存目錄，讓每個測試各自改壞一處。 */
-function scenario() {
-  const root = mkdtempSync(join(tmpdir(), "content-checks-"));
-  workDirs.push(root);
-  cpSync(fixtures, root, { recursive: true });
-  const chapterPath = join(root, slug, "chapter.md");
-  const storyPath = join(root, slug, "story.md");
-  const draftChapterPath = join(root, draftSlug, "chapter.md");
-  return {
-    root,
-    draftChapterPath,
-    chapterPath,
-    storyPath,
-    options: { chaptersDir: root },
-    read: (path: string) => readFileSync(path, "utf8"),
-    write: (path: string, content: string) => writeFileSync(path, content),
-    /** 取代 chapter.md 的 frontmatter 之後的內文，frontmatter 保持原樣。 */
-    setBody(body: string) {
-      const text = readFileSync(chapterPath, "utf8");
-      const end = text.indexOf("\n---\n", 4) + "\n---\n".length;
-      writeFileSync(chapterPath, `${text.slice(0, end)}\n${body}`);
-    },
-    /** 在 chapter.md 內做字串取代；找不到要取代的文字就失敗，避免測試空轉。 */
-    replaceInChapter(from: string, to: string) {
-      const text = readFileSync(chapterPath, "utf8");
-      assert.ok(text.includes(from), `fixture 找不到：${from}`);
-      writeFileSync(chapterPath, text.replace(from, to));
-    },
-  };
-}
 
 /** 最小的合法正文：`n` 個字加上固定的結尾小節（標題「開場」計 2 字）。 */
 const bodyWith = (n: number) =>
-  `## 開場\n\n${"字".repeat(n - 2)}\n\n## 還不知道的事\n\n還有很多。\n`;
+  `## 開場\n\n${"字".repeat(n - 2)}\n\n${FIXTURE_IMAGES}\n\n## 還不知道的事\n\n還有很多。\n`;
 
-const mentions = (issues: Issue[], text: string) =>
-  issues.filter((issue) => issue.message.includes(text));
-
-after(() => {
-  for (const dir of workDirs) rmSync(dir, { recursive: true, force: true });
-});
+after(cleanupScenarios);
 
 describe("runContentChecks", () => {
   it("通過情境沒有問題", async () => {
@@ -80,7 +42,10 @@ describe("runContentChecks", () => {
 
   it("CHAPTERS_DIR 指向檔案：回報問題並保留系統錯誤，不崩潰", async () => {
     const s = scenario();
-    const issues = await runContentChecks({ chaptersDir: s.chapterPath });
+    const issues = await runContentChecks({
+      ...s.options,
+      chaptersDir: s.chapterPath,
+    });
     assert.equal(issues.length, 1);
     assert.equal(issues[0]!.file, s.chapterPath);
     assert.match(issues[0]!.message, /無法讀取.*ENOTDIR/);
@@ -109,6 +74,7 @@ describe("runContentChecks", () => {
   it("找不到篇章目錄時回報問題而不是崩潰", async () => {
     const s = scenario();
     const issues = await runContentChecks({
+      ...s.options,
       chaptersDir: join(s.root, "不存在"),
     });
     assert.equal(issues.length, 1);
@@ -227,7 +193,7 @@ describe("runContentChecks", () => {
       const s = scenario();
       // 標題 2 字 + 1,499 個「字」+ 1,500 個英文詞 = 3,001
       s.setBody(
-        `## 開場\n\n${"字".repeat(1499)} ${"ab ".repeat(1500)}\n\n## 還不知道的事\n\n無。\n`,
+        `## 開場\n\n${"字".repeat(1499)} ${"ab ".repeat(1500)}\n\n${FIXTURE_IMAGES}\n\n## 還不知道的事\n\n無。\n`,
       );
       assert.deepEqual(await runContentChecks(s.options), []);
     });
@@ -302,7 +268,7 @@ describe("runContentChecks", () => {
 
     it("完全沒有二級標題", async () => {
       const s = scenario();
-      s.setBody(`${"字".repeat(3100)}\n`);
+      s.setBody(`${"字".repeat(3100)}\n\n${FIXTURE_IMAGES}\n`);
       const issues = await runContentChecks(s.options);
       assert.equal(issues.length, 1);
       assert.match(issues[0]!.message, /最後一個 ## 標題/);
@@ -329,28 +295,28 @@ describe("runContentChecks", () => {
 
     it("結尾帶 ## 收尾記號的「還不知道的事」也認得", async () => {
       const issues = await issuesFor(
-        `## 開場\n\n${filler(3100)}\n\n## 還不知道的事 ##\n\n還有很多。\n`,
+        `## 開場\n\n${filler(3100)}\n\n${FIXTURE_IMAGES}\n\n## 還不知道的事 ##\n\n還有很多。\n`,
       );
       assert.deepEqual(issues, []);
     });
 
     it("程式碼圍欄裡的 ## 不是標題", async () => {
       const issues = await issuesFor(
-        `## 開場\n\n${filler(3100)}\n\n## 還不知道的事\n\n還有很多。\n\n\`\`\`md\n## 後記\n\`\`\`\n`,
+        `## 開場\n\n${filler(3100)}\n\n${FIXTURE_IMAGES}\n\n## 還不知道的事\n\n還有很多。\n\n\`\`\`md\n## 後記\n\`\`\`\n`,
       );
       assert.deepEqual(issues, []);
     });
 
     it("圍欄裡的「## 還不知道的事」不會把正文提早截斷", async () => {
       const issues = await issuesFor(
-        `## 開場\n\n\`\`\`md\n## 還不知道的事\n\`\`\`\n\n${filler(3100)}\n\n## 還不知道的事\n\n無。\n`,
+        `## 開場\n\n\`\`\`md\n## 還不知道的事\n\`\`\`\n\n${filler(3100)}\n\n${FIXTURE_IMAGES}\n\n## 還不知道的事\n\n無。\n`,
       );
       assert.deepEqual(issues, []);
     });
 
     it("同名標題出現兩次：正文計到最後一個，不會變成 0 字", async () => {
       const issues = await issuesFor(
-        `## 還不知道的事\n\n先提一點。\n\n## 開場\n\n${filler(3100)}\n\n## 還不知道的事\n\n無。\n`,
+        `## 還不知道的事\n\n先提一點。\n\n## 開場\n\n${filler(3100)}\n\n${FIXTURE_IMAGES}\n\n## 還不知道的事\n\n無。\n`,
       );
       assert.deepEqual(issues, []);
     });
@@ -444,9 +410,13 @@ describe("runContentChecks", () => {
 });
 
 describe("check-content CLI", () => {
-  const run = (chaptersDir: string) =>
+  const run = (chaptersDir: string, researchDir = fixtureResearch) =>
     spawnSync(process.execPath, ["--experimental-strip-types", cli], {
-      env: { ...process.env, CHAPTERS_DIR: chaptersDir },
+      env: {
+        ...process.env,
+        CHAPTERS_DIR: chaptersDir,
+        RESEARCH_DIR: researchDir,
+      },
       encoding: "utf8",
     });
 
@@ -456,15 +426,13 @@ describe("check-content CLI", () => {
   });
 
   it("空目錄結束碼 0", () => {
-    const root = mkdtempSync(join(tmpdir(), "content-checks-empty-"));
-    workDirs.push(root);
-    assert.equal(run(root).status, 0);
+    assert.equal(run(makeTempDir("content-checks-empty-")).status, 0);
   });
 
   it("有硬性問題時非零結束，並印出檔案與原因", () => {
     const s = scenario();
     s.write(s.storyPath, "字".repeat(100));
-    const result = run(s.root);
+    const result = run(s.root, s.researchDir);
     assert.equal(result.status, 1);
     assert.match(result.stderr, /story\.md.*故事開場 100 字，需 450–600 字/);
   });
@@ -473,7 +441,7 @@ describe("check-content CLI", () => {
     const s = scenario();
     rmSync(s.storyPath);
     mkdirSync(s.storyPath);
-    const result = run(s.root);
+    const result = run(s.root, s.researchDir);
     assert.equal(result.status, 1);
     assert.match(result.stderr, /story\.md.*EISDIR/);
     assert.doesNotMatch(result.stderr, /at .*\.ts:\d+/);
@@ -482,7 +450,7 @@ describe("check-content CLI", () => {
   it("frontmatter 壞掉不會讓 CLI 崩潰（錯誤訊息而非堆疊）", () => {
     const s = scenario();
     s.write(s.chapterPath, "沒有 frontmatter");
-    const result = run(s.root);
+    const result = run(s.root, s.researchDir);
     assert.equal(result.status, 1);
     assert.doesNotMatch(result.stderr, /at .*\.ts:\d+/);
   });

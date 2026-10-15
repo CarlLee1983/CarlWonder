@@ -1,4 +1,4 @@
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import type { Issue } from "./issue.ts";
 import {
   FrontmatterError,
@@ -6,11 +6,14 @@ import {
   readMarkdown,
   readMarkdownBody,
 } from "./io.ts";
+import { checkChapterImages, checkResearch } from "./images.ts";
 import { checkBody, checkStory, checkTitle } from "./text-checks.ts";
 
 export interface ContentCheckOptions {
   /** 篇章內容目錄，每個子資料夾是一篇篇章。 */
   chaptersDir: string;
+  /** 研究紀錄目錄，每篇篇章對應 `<slug>.md`。 */
+  researchDir: string;
   /** 警告級發現（不影響通過與否）的接收者；未提供則不產生警告。 */
   onWarning?: (warning: Issue) => void;
 }
@@ -22,8 +25,12 @@ const readFailure = (file: string, error: unknown): Issue => ({
 });
 
 /** 檢查單一篇章資料夾；draft 與否不影響檢查。 */
-function checkChapter(dir: string): Issue[] {
+async function checkChapter(
+  dir: string,
+  researchDir: string,
+): Promise<Issue[]> {
   const issues: Issue[] = [];
+  let imageFiles: string[] = [];
 
   const chapterFile = join(dir, "chapter.md");
   try {
@@ -36,6 +43,14 @@ function checkChapter(dir: string): Issue[] {
         ...checkTitle(chapterFile, title),
         ...checkBody(chapterFile, chapter.body),
       );
+      const images = await checkChapterImages(
+        chapterFile,
+        dir,
+        chapter.data,
+        chapter.body,
+      );
+      issues.push(...images.issues);
+      imageFiles = images.files;
     }
   } catch (error) {
     // 讀不到或 frontmatter 壞掉就沒有可靠的標題與內文，回報後仍繼續檢查 story.md。
@@ -60,6 +75,19 @@ function checkChapter(dir: string): Issue[] {
   } catch (error) {
     issues.push(readFailure(storyFile, error));
   }
+
+  const researchFile = join(researchDir, `${basename(dir)}.md`);
+  try {
+    issues.push(
+      ...checkResearch(
+        researchFile,
+        readMarkdownBody(researchFile),
+        imageFiles,
+      ),
+    );
+  } catch (error) {
+    issues.push(readFailure(researchFile, error));
+  }
   return issues;
 }
 
@@ -81,5 +109,10 @@ export async function runContentChecks(
       },
     ];
   }
-  return slugs.flatMap((slug) => checkChapter(join(options.chaptersDir, slug)));
+  const perChapter = await Promise.all(
+    slugs.map((slug) =>
+      checkChapter(join(options.chaptersDir, slug), options.researchDir),
+    ),
+  );
+  return perChapter.flat();
 }

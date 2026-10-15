@@ -1,5 +1,7 @@
 import { defineConfig } from "astro/config";
 import { satteri } from "@astrojs/markdown-satteri";
+import { resolveChaptersDir } from "./src/content/content-dir.ts";
+import { chapterMarkdown } from "./src/markdown/chapter-markdown.ts";
 
 export default defineConfig({
   site: "https://carlwonder.gravito.dev",
@@ -22,6 +24,12 @@ export default defineConfig({
     },
   },
   markdown: {
-    processor: satteri(),
+    processor: satteri({
+      hastPlugins: [
+        chapterMarkdown({
+          chaptersDir: resolveChaptersDir(),
+        }),
+      ],
+    }),
   },
 });

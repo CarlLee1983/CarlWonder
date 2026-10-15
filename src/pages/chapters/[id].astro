@@ -18,10 +18,99 @@ const { Content } = await render(chapter);
 <Base
   title={`${chapter.data.title}｜CarlWonder`}
   description={chapter.data.summary}
+  wide
 >
   <article>
     <h1>{chapter.data.title}</h1>
     <p>{chapter.data.summary}</p>
-    <Content />
+    <div class="chapter-body">
+      <Content />
+    </div>
   </article>
 </Base>
+
+<style is:global>
+  /* 正文欄約 640 px；圖片跟著所屬段落，窄螢幕在段落之後，寬螢幕浮到右側旁欄。 */
+  .chapter-body {
+    max-width: 40rem;
+  }
+
+  .chapter-block {
+    margin: 1em 0;
+  }
+
+  .chapter-block > p {
+    margin: 0;
+  }
+
+  .chapter-figure {
+    margin: 1em 0 0;
+  }
+
+  .chapter-figure__media {
+    position: relative;
+  }
+
+  .chapter-figure__media img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .chapter-figure__badge {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    padding: 0 0.7rem;
+    border-radius: 999px;
+    background: #1f1f1f;
+    color: #fff;
+    font-size: 0.8125rem;
+    line-height: 1.7;
+  }
+
+  .chapter-figure figcaption {
+    margin-top: 0.4rem;
+    color: #444;
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+
+  .chapter-figure figcaption p {
+    margin: 0 0 0.3rem;
+  }
+
+  @media (min-width: 62rem) {
+    .chapter-body {
+      max-width: none;
+    }
+
+    .chapter-body > :not(.chapter-block) {
+      max-width: 40rem;
+    }
+
+    .chapter-block {
+      display: grid;
+      grid-template-columns: 40rem 17.5rem;
+      column-gap: 2rem;
+      align-items: start;
+    }
+
+    .chapter-block > p {
+      grid-area: 1 / 1;
+    }
+
+    .chapter-block > .chapter-figure {
+      grid-column: 2;
+      margin: 0;
+    }
+
+    .chapter-block > .chapter-figure:first-of-type {
+      grid-row: 1;
+    }
+
+    .chapter-block > .chapter-figure ~ .chapter-figure {
+      margin-top: 1em;
+    }
+  }
+</style>
