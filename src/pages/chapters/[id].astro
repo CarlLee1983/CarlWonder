@@ -1,0 +1,27 @@
+---
+import { render } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import { getVisibleChapters } from "../../utils/chapters";
+
+export async function getStaticPaths() {
+  const chapters = await getVisibleChapters();
+  return chapters.map((chapter) => ({
+    params: { id: chapter.id },
+    props: { chapter },
+  }));
+}
+
+const { chapter } = Astro.props;
+const { Content } = await render(chapter);
+---
+
+<Base
+  title={`${chapter.data.title}｜CarlWonder`}
+  description={chapter.data.summary}
+>
+  <article>
+    <h1>{chapter.data.title}</h1>
+    <p>{chapter.data.summary}</p>
+    <Content />
+  </article>
+</Base>

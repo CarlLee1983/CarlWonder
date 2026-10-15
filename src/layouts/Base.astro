@@ -1,0 +1,44 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  noindex?: boolean;
+}
+
+const { title, description, noindex = false } = Astro.props;
+---
+
+<!doctype html>
+<html lang="zh-Hant-TW">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex" />}
+  </head>
+  <body>
+    <header>
+      <a href="/">CarlWonder</a>
+    </header>
+    <main>
+      <slot />
+    </main>
+  </body>
+</html>
+
+<style is:global>
+  body {
+    max-width: 42rem;
+    margin: 0 auto;
+    padding: 1rem 1.25rem 4rem;
+    color: #1f1f1f;
+    background: #fffdf8;
+    font-family: system-ui, "Noto Sans TC", "PingFang TC", sans-serif;
+    line-height: 1.9;
+  }
+
+  a {
+    color: #0b4f8a;
+  }
+</style>

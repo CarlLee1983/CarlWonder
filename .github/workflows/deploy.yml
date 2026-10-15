@@ -1,0 +1,38 @@
+name: Deploy
+
+# 只在推送 main 時部署；沒有排程、沒有手動觸發。
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# 同群組排隊，不取消進行中的部署，避免半途中斷。
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+
+      # 與 CI 相同的必要檢查，任一失敗即停止、不部署。
+      - name: Verify
+        uses: ./.github/actions/verify
+
+      # 驗證步驟中的 e2e 已以固定篇章覆寫 dist，必須以正式內容重建。
+      - name: Rebuild with production content
+        run: pnpm build
+
+      # token 只經由環境變數傳遞；不開 debug、不 echo。
+      - name: Deploy to Cloudflare
+        run: pnpm exec wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

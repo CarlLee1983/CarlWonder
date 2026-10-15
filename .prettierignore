@@ -1,0 +1,10 @@
+dist
+.astro
+.wrangler
+node_modules
+pnpm-lock.yaml
+test-results
+playwright-report
+.scratch
+# 規劃文件（表格手動對齊）不由 prettier 管理
+docs
