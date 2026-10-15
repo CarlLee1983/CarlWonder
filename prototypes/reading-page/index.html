@@ -1,0 +1,365 @@
+<!doctype html>
+<!--
+  原型（PROTOTYPE，用完即丟）：閱讀頁原型 ticket 用。
+  三種篇章閱讀頁版型，用 ?variant=A|B|C 切換，底部浮動列或 ←/→ 鍵循環。
+  資料形狀照「技術骨架」的 frontmatter schema；文字是示意草稿，未查核。
+-->
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>閱讀頁原型</title>
+<style>
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; color: #24211c; background: #fbf8f2; font-family: "PingFang TC", "Noto Sans TC", system-ui, sans-serif; line-height: 1.85; }
+  a { color: inherit; }
+  img, svg { display: block; max-width: 100%; }
+  .proto-banner { background: #2b2b2b; color: #fff; font-size: 13px; padding: 6px 16px; text-align: center; }
+
+  /* 圖片佔位與類型膠囊（三版共用） */
+  .fig { margin: 0; }
+  .ph { position: relative; width: 100%; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; text-align: center; padding: 24px; font-size: 14px; color: #5b5346; }
+  .ph[data-type="artifact-photo"] { background: repeating-linear-gradient(45deg, #d9cfbd 0 14px, #d2c6b1 14px 28px); }
+  .ph[data-type="reconstruction"] { background: repeating-linear-gradient(0deg, #cfd9de 0 1px, #e6edf0 1px 22px), #e6edf0; }
+  .ph[data-type="replica-photo"] { background: repeating-linear-gradient(90deg, #dcd6c8 0 10px, #e8e3d6 10px 20px); }
+  .ph[data-type="imagined"] { background: radial-gradient(circle at 30% 30%, #f3dfb8, #e2c9a0 60%, #cfb187); font-style: italic; }
+  .capsule { position: absolute; top: 10px; left: 10px; background: rgba(20,20,20,.82); color: #fff; font-size: 12.5px; font-style: normal; letter-spacing: .08em; padding: 3px 10px; border-radius: 999px; }
+  .fig figcaption { font-size: 13.5px; color: #6a6254; line-height: 1.7; margin-top: 8px; }
+  .fig figcaption .credit { display: block; font-size: 12.5px; color: #8a8173; }
+
+  .level { font-size: 12.5px; padding: 1px 8px; border-radius: 4px; white-space: nowrap; }
+  .level.known { background: #dfeadb; color: #2f5a2a; }
+  .level.inferred { background: #e3e6f3; color: #34407a; }
+  .level.legend { background: #f3e2d6; color: #7a3d1f; }
+  .level.unknown { background: #e8e5df; color: #4b463d; }
+
+  /* 浮動切換列（不屬於設計本身） */
+  #switcher { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 99; display: flex; align-items: center; gap: 4px; background: #111; color: #fff; border-radius: 999px; padding: 6px; box-shadow: 0 6px 24px rgba(0,0,0,.35); font: 14px/1 system-ui, sans-serif; }
+  #switcher button { background: #333; color: #fff; border: 0; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 16px; }
+  #switcher span { padding: 0 14px; white-space: nowrap; }
+
+  /* ===== A：雜誌長文 ===== */
+  .vA { font-family: "Songti TC", "Noto Serif TC", serif; }
+  .vA .hero { max-width: 1100px; margin: 0 auto; padding: 56px 16px 0; }
+  .vA .kicker { font-family: "PingFang TC", sans-serif; font-size: 13px; letter-spacing: .2em; color: #8a6d3b; }
+  .vA h1 { font-size: clamp(30px, 5vw, 48px); line-height: 1.3; margin: 8px 0 12px; }
+  .vA .summary { font-size: 19px; color: #5b5346; max-width: 720px; }
+  .vA .hero .ph { aspect-ratio: 16/8; margin-top: 32px; }
+  .vA .col { max-width: 680px; margin: 0 auto; padding: 0 16px; font-size: 18px; }
+  .vA .col h2 { font-size: 26px; margin: 56px 0 8px; }
+  .vA .col .fig { margin: 32px -60px; }
+  .vA .col .fig .ph { aspect-ratio: 3/2; }
+  .vA table { width: 100%; border-collapse: collapse; font-family: "PingFang TC", sans-serif; font-size: 15px; }
+  .vA td, .vA th { border-bottom: 1px solid #e3dccd; padding: 10px 6px; text-align: left; vertical-align: top; }
+  .vA ol.refs { font-family: "PingFang TC", sans-serif; font-size: 14.5px; padding-left: 22px; }
+  .vA .checked { font-family: "PingFang TC", sans-serif; font-size: 14px; color: #6a6254; }
+  .vA .family { margin-top: 80px; background: #f1e6cf; padding: 64px 16px 120px; font-family: "PingFang TC", sans-serif; }
+  .vA .family-inner { max-width: 980px; margin: 0 auto; }
+  .vA .family h2 { font-size: 34px; margin: 0 0 4px; }
+  .vA .family .lede { color: #6a5a3b; margin: 0 0 40px; }
+  .vA .family h3 { font-size: 22px; margin: 48px 0 12px; }
+  .vA .story { background: #fffdf8; border-radius: 10px; padding: 32px clamp(20px, 5vw, 56px); font-size: 21px; line-height: 2.1; box-shadow: 0 2px 0 #e3d3b1; }
+  .vA .story .meta { font-size: 14px; color: #8a7a5b; margin-bottom: 12px; }
+  .vA .qgrid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 28px; align-items: start; }
+  .vA .qgrid .ph { aspect-ratio: 4/3; }
+  .vA .q { background: #fffdf8; border-radius: 10px; padding: 16px 20px; margin-bottom: 14px; }
+  .vA .q b { display: block; color: #8a6d3b; }
+  .vA .q .older { font-size: 14.5px; color: #6a6254; }
+  .vA .tips { font-size: 15px; color: #5b4d33; }
+  .vA .act { display: grid; grid-template-columns: 1fr 1.4fr; gap: 28px; background: #fffdf8; border-radius: 10px; padding: 28px; }
+  .vA .act ol { padding-left: 22px; margin: 0; }
+  .vA .adult { background: #fbe9c9; border-left: 4px solid #d29b3c; padding: 10px 14px; margin-top: 14px; font-size: 15px; }
+  @media (max-width: 760px) { .vA .col .fig { margin: 28px 0; } .vA .qgrid, .vA .act { grid-template-columns: 1fr; } }
+
+  /* ===== B：側欄導覽 ===== */
+  .vB { background: #fff; }
+  .vB .top { border-bottom: 1px solid #ececec; padding: 28px 16px 24px; }
+  .vB .top-inner { max-width: 1240px; margin: 0 auto; }
+  .vB h1 { font-size: clamp(26px, 3.6vw, 36px); line-height: 1.35; margin: 0 0 6px; }
+  .vB .summary { color: #555; margin: 0; }
+  .vB .meta { font-size: 13px; color: #888; margin-top: 8px; }
+  .vB .layout { max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: 200px minmax(0, 1fr) 280px; gap: 40px; padding: 32px 16px 120px; }
+  .vB nav, .vB aside { position: sticky; top: 20px; align-self: start; font-size: 14px; }
+  .vB nav a { display: block; text-decoration: none; color: #666; padding: 5px 10px; border-left: 2px solid #eee; }
+  .vB nav a.on { color: #111; border-left-color: #111; font-weight: 600; }
+  .vB nav .navgroup { margin-top: 18px; font-size: 12px; color: #999; letter-spacing: .1em; }
+  .vB main { font-size: 17px; max-width: 700px; }
+  .vB main h2 { font-size: 23px; margin: 48px 0 8px; padding-top: 8px; }
+  .vB main .fig .ph { aspect-ratio: 3/2; }
+  .vB main .fig { margin: 24px 0; }
+  .vB aside h4 { margin: 0 0 8px; font-size: 13px; color: #888; letter-spacing: .1em; }
+  .vB aside .claim { padding: 10px 0; border-bottom: 1px solid #f0f0f0; line-height: 1.6; }
+  .vB aside .claim .level { margin-right: 6px; }
+  .vB aside .claim small { color: #999; }
+  .vB .tabs { display: flex; gap: 0; border-bottom: 2px solid #111; margin-top: 12px; }
+  .vB .tabs button { border: 0; background: #f2f2f2; padding: 10px 18px; font-size: 15px; cursor: pointer; margin-right: 4px; border-radius: 6px 6px 0 0; }
+  .vB .tabs button.on { background: #111; color: #fff; }
+  .vB .tabpanel { padding: 24px 0; }
+  .vB .story { font-size: 19px; line-height: 2.05; }
+  .vB .qrow { display: grid; grid-template-columns: 70px 1fr; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+  .vB .qrow .tag { font-weight: 700; }
+  .vB .qrow .older { color: #777; font-size: 15px; }
+  .vB .familybox { border: 2px solid #111; border-radius: 10px; padding: 24px; margin-top: 56px; }
+  .vB .familybox h2 { margin-top: 0; }
+  .vB table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .vB td, .vB th { border-bottom: 1px solid #eee; padding: 8px 4px; text-align: left; vertical-align: top; }
+  .vB ol.refs { font-size: 14.5px; padding-left: 22px; }
+  @media (max-width: 1080px) { .vB .layout { grid-template-columns: minmax(0,1fr); } .vB nav { display: none; } .vB aside { position: static; order: 2; } }
+
+  /* ===== C：雙入口 ===== */
+  .vC { background: #f4f1ea; }
+  .vC .doors { display: grid; grid-template-columns: 1fr 1fr; min-height: 78vh; }
+  .vC .door { padding: 48px clamp(16px, 4vw, 56px); display: flex; flex-direction: column; justify-content: flex-end; text-decoration: none; }
+  .vC .door.adult { background: #1f2a33; color: #f4f1ea; }
+  .vC .door.family { background: #f2c66d; color: #2a2112; }
+  .vC .door .who { font-size: 13px; letter-spacing: .2em; opacity: .75; }
+  .vC .door h2 { font-size: clamp(24px, 3vw, 34px); margin: 6px 0; line-height: 1.35; }
+  .vC .door p { margin: 0 0 16px; opacity: .85; }
+  .vC .door .go { font-weight: 700; }
+  .vC .titlebar { grid-column: 1 / -1; background: #f4f1ea; padding: 40px 16px 32px; text-align: center; }
+  .vC h1 { font-size: clamp(28px, 4.4vw, 46px); line-height: 1.3; margin: 0 0 8px; }
+  .vC .titlebar .summary { color: #5b5346; max-width: 640px; margin: 0 auto; }
+  .vC .reading { background: #fff; padding: 64px 16px; }
+  .vC .reading-inner { max-width: 1040px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 640px) 300px; gap: 56px; }
+  .vC .reading main { font-size: 17.5px; }
+  .vC .reading h2 { font-size: 24px; margin: 44px 0 8px; }
+  .vC .margin-figs .fig { margin-bottom: 28px; }
+  .vC .margin-figs .ph { aspect-ratio: 4/3; }
+  .vC .evidence { display: grid; gap: 10px; margin-top: 16px; }
+  .vC .ev { display: grid; grid-template-columns: 64px 1fr auto; gap: 12px; align-items: baseline; background: #f7f5f0; padding: 12px 14px; border-radius: 8px; font-size: 15px; }
+  .vC .ev .refs { color: #999; font-size: 13px; }
+  .vC ol.refs { font-size: 14.5px; padding-left: 22px; }
+  .vC .famzone { background: #f2c66d; padding: 56px 16px 120px; }
+  .vC .famzone-inner { max-width: 1040px; margin: 0 auto; }
+  .vC .famzone h2 { font-size: 34px; margin: 0; }
+  .vC .steps { display: flex; gap: 8px; margin: 12px 0 32px; flex-wrap: wrap; }
+  .vC .steps span { background: rgba(255,255,255,.55); border-radius: 999px; padding: 4px 14px; font-size: 14px; }
+  .vC .card { background: #fffaf0; border-radius: 14px; padding: 28px; margin-bottom: 24px; box-shadow: 0 3px 0 #d8a948; }
+  .vC .card h3 { margin: 0 0 12px; font-size: 22px; }
+  .vC .readaloud { font-size: 19px; line-height: 2.05; }
+  .vC .readaloud.big { position: fixed; inset: 0; z-index: 50; background: #fffaf0; font-size: 30px; line-height: 2.2; padding: 6vh 8vw 120px; overflow: auto; }
+  .vC .btn { background: #2a2112; color: #fff; border: 0; border-radius: 999px; padding: 8px 18px; font-size: 15px; cursor: pointer; }
+  .vC .qcards { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr; gap: 16px; align-items: stretch; }
+  .vC .qcards .ph { aspect-ratio: 1/1; height: 100%; }
+  .vC .qc { background: #fff; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; }
+  .vC .qc .tag { font-size: 26px; font-weight: 800; }
+  .vC .qc .older { margin-top: auto; padding-top: 12px; border-top: 1px dashed #e0d3b0; font-size: 14.5px; color: #6a6254; }
+  .vC .checklist li { list-style: none; margin: 8px 0; }
+  .vC .checklist input { transform: scale(1.4); margin-right: 10px; }
+  .vC .actmeta { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .vC .actmeta span { background: #f6e7c4; border-radius: 6px; padding: 2px 10px; font-size: 14px; }
+  @media (max-width: 860px) { .vC .doors { grid-template-columns: 1fr; min-height: 0; } .vC .reading-inner { grid-template-columns: 1fr; } .vC .qcards { grid-template-columns: 1fr; } .vC .qcards .ph { aspect-ratio: 4/3; } }
+</style>
+</head>
+<body>
+<div class="proto-banner">原型示意：版型比較用，文字是未查核的草稿，圖片是佔位</div>
+<div id="root"></div>
+<div id="switcher"><button id="prev" aria-label="上一個版型">←</button><span id="label"></span><button id="next" aria-label="下一個版型">→</button></div>
+
+<script>
+// ---- 資料：形狀照「技術骨架」的 frontmatter schema ----
+const chapter = {
+  title: "安提基特拉機械：兩千年前的齒輪在算什麼？",
+  summary: "一團從沉船撈起的青銅碎片，X 光斷層掃描顯示裡面藏著三十個齒輪，用來推算日月、日月食與比賽年份。",
+  lastChecked: "2026-10-15",
+  images: [
+    { file: "fragment-a.webp", type: "artifact-photo", alt: "綠色青銅碎片，中央有一個大齒輪，邊緣有細小的齒", caption: "主碎片 A，收藏於雅典國家考古博物館。", credit: "照片：〔作者〕／Wikimedia Commons，CC BY-SA 4.0" },
+    { file: "front-reconstruction.webp", type: "reconstruction", alt: "研究重建：正面刻度盤上有同心圓環與多個行星指針", caption: "正面行星顯示的重建，出自 Freeth 等人 2021 年的論文〔3〕。", credit: "圖：Freeth et al.／Scientific Reports，CC BY 4.0" },
+    { file: "replica.webp", type: "replica-photo", alt: "複製品：木盒中的青銅機械，正面有大刻度盤", caption: "依研究成果製作的複製品，製作者〔待填〕。", credit: "照片：〔作者〕／Wikimedia Commons，CC BY-SA 3.0" },
+    { file: "salvage-scene.webp", type: "imagined", alt: "想像圖：潛水員在海底沙中發現青銅雕像的手臂", caption: "依據：沉船於 1900 年由採海綿的潛水員發現〔4〕。想像部分：潛水員的人數、服裝與海底光線。" },
+  ],
+  references: [
+    { key: "freeth2006", text: "Freeth, T. 等（2006）。Decoding the ancient Greek astronomical calculator known as the Antikythera Mechanism。Nature 444。", url: "https://doi.org/10.1038/nature05357", accessed: "2026-10-12" },
+    { key: "freeth2008", text: "Freeth, T. 等（2008）。Calendars with Olympiad display and eclipse prediction on the Antikythera Mechanism。Nature 454。", url: "https://doi.org/10.1038/nature07130", accessed: "2026-10-12" },
+    { key: "freeth2021", text: "Freeth, T. 等（2021）。A Model of the Cosmos in the ancient Greek Antikythera Mechanism。Scientific Reports 11。", url: "https://doi.org/10.1038/s41598-021-84310-w", accessed: "2026-10-12" },
+    { key: "namuseum", text: "雅典國家考古博物館（無年份）。X 15087 館方圖說。", url: "#", accessed: "2026-10-12" },
+    { key: "cicero", text: "西塞羅（公元前 1 世紀）。《論共和國》第一卷。", url: "#", accessed: "2026-10-12" },
+  ],
+  evidenceNotes: [
+    { claim: "殘存 82 塊碎片，約只剩原機的三分之一，留下 30 個齒輪", level: "known", refs: ["freeth2021"] },
+    { claim: "機械能預測日月食", level: "known", refs: ["freeth2006"] },
+    { claim: "刻度盤用科林斯體系的月名，並標出奧林匹亞等比賽年份", level: "known", refs: ["freeth2008"] },
+    { claim: "正面有顯示五顆行星位置的指針", level: "inferred", refs: ["freeth2021"] },
+    { claim: "阿基米德是製作者", level: "legend", refs: ["cicero"] },
+    { claim: "誰在哪裡製作了它", level: "unknown", refs: [] },
+  ],
+  family: {
+    anchorImage: "fragment-a.webp",
+    questions: {
+      see: { basic: "你在照片裡看到幾個圓圈？它們的邊緣長什麼樣子？", older: "找找看，有沒有看起來像字的刻痕？" },
+      think: { basic: "你覺得這些齒輪一起轉，是要做什麼用的？", older: "為什麼要把它做得這麼小，還裝在盒子裡？" },
+      wonder: { basic: "如果能問做它的人一個問題，你想問什麼？", older: "不見的三分之二，可能還在海底嗎？要怎麼找？" },
+    },
+    parentTips: [
+      "孩子回答後接著問一句：「你是怎麼看出來的？」",
+      "把孩子的話擴充一點，例如：「對，有尖尖的齒，就像腳踏車的齒輪。」",
+      "「覺得」那一題，等孩子猜完再說：學者推測它是用來算月亮和太陽的。",
+    ],
+    activity: {
+      name: "兩片紙盤轉出月相",
+      minutes: 25,
+      materials: ["紙盤兩個", "兩腳釘一個", "黑色彩色筆", "剪刀"],
+      steps: [
+        "在第一個紙盤上畫一個大太陽和地球。",
+        "在第二個紙盤靠邊的地方剪一個圓窗。",
+        "大人用兩腳釘把兩個紙盤的圓心釘在一起。",
+        "轉動上面的紙盤，看圓窗裡的月亮亮面怎麼變。",
+        "一起數：轉一整圈，月亮變了幾種樣子？",
+      ],
+      adultRole: "用兩腳釘固定圓心、操作剪刀；兩腳釘用完收好，不讓年幼的弟妹拿到。",
+      link: "連回正文：機械用齒輪表現月亮和太陽轉動的差，月相就從這個差來。",
+    },
+  },
+};
+
+const sections = [
+  { id: "s1", h: "海綿潛水員的意外", p: [
+    "1900 年，一群在希臘安提基特拉島外海採海綿的潛水員，在四十多公尺深的沙裡看見一隻青銅手臂。那是一艘沉船，船上載滿雕像、玻璃器與陶罐。打撈持續到隔年，戰利品送進雅典的博物館。",
+    "1902 年，有人注意到一團已經裂開的綠色青銅塊上，有細小的齒。這就是後來被稱為安提基特拉機械的東西。館方圖說把它定在公元前 2 世紀下半葉，沉船則大約發生在公元前 60 到 50 年之間。",
+  ], fig: 3 },
+  { id: "s2", h: "齒輪裡的天空", p: [
+    "肉眼只看得到碎片表面。真正的突破在 2005 年：研究團隊用 X 光斷層掃描，把碎片一層一層看穿，連藏在裡面的齒輪齒數與細小的刻字都讀了出來。",
+    "測量顯示，殘存的 82 塊碎片大約只有原機的三分之一，留下 30 個齒輪。背面的螺旋刻度盤能預測日月食；刻在上面的月名屬於科林斯一帶的曆法，旁邊還標出奧林匹亞等比賽的年份。",
+    "正面的情況就沒那麼清楚。多數學者認為正面曾經顯示五顆行星的位置，但負責行星的齒輪大多沒有留下來，現在看到的版本是依刻字和殘存零件推回去的重建。",
+  ], fig: 1 },
+  { id: "s3", h: "「第一台電腦」？", p: [
+    "網路上常說它是「世界上第一台電腦」，甚至有一種說法認為它來自外星人或時間旅行者。這些說法的出處多半是電視節目與影片，不是研究報告。它沒有程式，也不會自己算；它是一台把天文週期刻進齒數的手搖機械。",
+    "也有人說它是阿基米德做的。古書記載，西塞羅確實寫過阿基米德做的天球儀，但那段文字只說明古人做過這類儀器，不能證明就是這一件。",
+  ], fig: 2 },
+  { id: "unknown", h: "還不知道的事", p: [
+    "至今沒找到其他同類的實物，所以還不知道是誰、在哪裡做出它，也還不知道當時有沒有一整個製作這種機械的工坊。",
+    "仍有爭論的是正面的細節：月交點指針在實物上沒有證據；2025 年一篇還沒經過同儕審查的預印本模擬認為，照某些誤差估計，齒輪可能會卡住。缺掉的三分之二，可能還在海底的沙裡。",
+  ] },
+];
+
+const LEVEL = { known: "已知", inferred: "推論", legend: "傳說", unknown: "未知" };
+const TYPE = { "artifact-photo": null, reconstruction: "研究重建", "replica-photo": "複製品", imagined: "想像圖" };
+const refNo = k => chapter.references.findIndex(r => r.key === k) + 1;
+const imgByFile = f => chapter.images.find(i => i.file === f);
+
+// ---- 共用小元件 ----
+function ph(img, extraStyle = "") {
+  const cap = TYPE[img.type] ? `<span class="capsule">${TYPE[img.type]}</span>` : "";
+  return `<div class="ph" data-type="${img.type}" style="${extraStyle}" role="img" aria-label="${img.alt}">${cap}〔${img.file}〕<br>${img.alt}</div>`;
+}
+function fig(img, extra = "") {
+  return `<figure class="fig">${ph(img, extra)}<figcaption>${img.caption}${img.credit ? `<span class="credit">${img.credit}</span>` : ""}</figcaption></figure>`;
+}
+const lvl = l => `<span class="level ${l}">${LEVEL[l]}</span>`;
+const refsList = () => `<ol class="refs">${chapter.references.map(r => `<li>${r.text} <a href="${r.url}">連結</a>（查閱 ${r.accessed}）</li>`).join("")}</ol><p class="checked">最後查核：${chapter.lastChecked}</p>`;
+const evTable = () => `<table><thead><tr><th>主張</th><th>證據等級</th><th>參考資料</th></tr></thead><tbody>${chapter.evidenceNotes.map(n => `<tr><td>${n.claim}</td><td>${lvl(n.level)}</td><td>${n.refs.map(refNo).map(n => `〔${n}〕`).join("") || "—"}</td></tr>`).join("")}</tbody></table>`;
+const QLABEL = { see: "看到", think: "覺得", wonder: "好奇" };
+let storyText = "";
+
+// ---- A：雜誌長文。單欄敘事、全幅主圖；親子共學是頁末換色的第二幕 ----
+function VariantA() {
+  const f = chapter.family, a = f.activity;
+  return `<div class="vA">
+  <header class="hero"><div class="kicker">古文明 · 超前技術</div><h1>${chapter.title}</h1><p class="summary">${chapter.summary}</p>${ph(chapter.images[0])}<p style="font-size:13px;color:#8a8173;margin-top:6px">${chapter.images[0].caption} ${chapter.images[0].credit}</p></header>
+  <div class="col">
+    ${sections.map(s => `<h2 id="${s.id}">${s.h}</h2>${s.p.map(t => `<p>${t}</p>`).join("")}${s.fig ? fig(chapter.images[s.fig]) : ""}`).join("")}
+    <h2>證據說明</h2>${evTable()}
+    <h2>參考資料</h2>${refsList()}
+  </div>
+  <section class="family" id="family"><div class="family-inner">
+    <h2>親子共學</h2><p class="lede">給家長和 6–10 歲的孩子：先唸故事，再一起看照片，最後動手做。</p>
+    <h3>故事開場</h3><div class="story"><div class="meta">可以照著唸 · 約 3 分鐘</div>${storyText}</div>
+    <h3>觀察提問</h3><div class="qgrid"><div>${fig(imgByFile(f.anchorImage))}</div><div>
+      ${Object.entries(f.questions).map(([k, q]) => `<div class="q"><b>${QLABEL[k]}</b>${q.basic}<div class="older">大一點的孩子：${q.older}</div></div>`).join("")}
+      <div class="tips"><b>家長提示</b><ul>${f.parentTips.map(t => `<li>${t}</li>`).join("")}</ul></div></div></div>
+    <h3>家庭探索活動：${a.name}</h3><div class="act"><div><b>所需時間</b> ${a.minutes} 分鐘<br><b>材料</b><ul>${a.materials.map(m => `<li>${m}</li>`).join("")}</ul><div class="adult"><b>大人要做什麼</b><br>${a.adultRole}</div></div><div><b>步驟</b><ol>${a.steps.map(s => `<li>${s}</li>`).join("")}</ol><p style="color:#6a6254;font-size:15px">${a.link}</p></div></div>
+  </div></section></div>`;
+}
+
+// ---- B：側欄導覽。左目錄、右側欄常駐證據說明；親子共學收進分頁框 ----
+function VariantB() {
+  const f = chapter.family, a = f.activity;
+  const tab = location.hash.startsWith("#tab-") ? location.hash.slice(5) : "story";
+  const panels = {
+    story: `<div class="story">${storyText}</div>`,
+    questions: `<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">${fig(imgByFile(f.anchorImage))}<div>${Object.entries(f.questions).map(([k, q]) => `<div class="qrow"><div class="tag">${QLABEL[k]}</div><div>${q.basic}<div class="older">大一點的孩子：${q.older}</div></div></div>`).join("")}<p style="font-size:14px;color:#666">${f.parentTips.join("<br>")}</p></div></div>`,
+    activity: `<h3 style="margin-top:0">${a.name} · ${a.minutes} 分鐘</h3><p><b>材料：</b>${a.materials.join("、")}</p><ol>${a.steps.map(s => `<li>${s}</li>`).join("")}</ol><p><b>大人要做什麼：</b>${a.adultRole}</p><p style="color:#777">${a.link}</p>`,
+  };
+  return `<div class="vB">
+  <div class="top"><div class="top-inner"><h1>${chapter.title}</h1><p class="summary">${chapter.summary}</p><div class="meta">古文明 · 超前技術 · 閱讀約 15 分鐘 · 最後查核 ${chapter.lastChecked}</div></div></div>
+  <div class="layout">
+    <nav id="toc"><div class="navgroup">深入正文</div>${sections.map(s => `<a href="#${s.id}">${s.h}</a>`).join("")}<a href="#evidence">證據說明</a><a href="#refs">參考資料</a><div class="navgroup">親子共學</div><a href="#family">故事・提問・活動</a></nav>
+    <main>
+      ${fig(chapter.images[0])}
+      ${sections.map(s => `<h2 id="${s.id}">${s.h}</h2>${s.p.map(t => `<p>${t}</p>`).join("")}${s.fig ? fig(chapter.images[s.fig]) : ""}`).join("")}
+      <h2 id="evidence">證據說明</h2>${evTable()}
+      <h2 id="refs">參考資料</h2>${refsList()}
+      <section class="familybox" id="family"><h2>親子共學</h2><div class="tabs">${[["story", "故事開場"], ["questions", "觀察提問"], ["activity", "家庭探索活動"]].map(([k, t]) => `<button class="${k === tab ? "on" : ""}" data-tab="${k}">${t}</button>`).join("")}</div><div class="tabpanel">${panels[tab]}</div></section>
+    </main>
+    <aside><h4>本篇的主要主張</h4>${chapter.evidenceNotes.map(n => `<div class="claim">${lvl(n.level)}${n.claim} <small>${n.refs.map(refNo).map(x => `〔${x}〕`).join("")}</small></div>`).join("")}<p style="font-size:12.5px;color:#999;margin-top:10px">已知：有實物、測年或文獻直接支持。推論：學者的解讀。傳說：有出處的故事。未知：還沒有答案。</p></aside>
+  </div></div>`;
+}
+
+// ---- C：雙入口。首屏兩扇門分流大人與親子；正文旁邊欄放圖；親子區是卡片與朗讀模式 ----
+function VariantC() {
+  const f = chapter.family, a = f.activity;
+  return `<div class="vC">
+  <div class="doors">
+    <div class="titlebar"><h1>${chapter.title}</h1><p class="summary">${chapter.summary}</p></div>
+    <a class="door adult" href="#read"><div class="who">給大人</div><h2>深入正文</h2><p>沉船、X 光與三十個齒輪：證據說到哪裡，傳說從哪裡開始。約 15 分鐘。</p><span class="go">開始讀 ↓</span></a>
+    <a class="door family" href="#fam"><div class="who">給家長與 6–10 歲的孩子</div><h2>親子共學</h2><p>一段可以照唸的故事、一張照片三個問題、一個 25 分鐘的紙盤活動。</p><span class="go">一起來 ↓</span></a>
+  </div>
+  <section class="reading" id="read"><div class="reading-inner">
+    <main>${sections.map(s => `<h2 id="${s.id}">${s.h}</h2>${s.p.map(t => `<p>${t}</p>`).join("")}`).join("")}
+      <h2>證據說明</h2><div class="evidence">${chapter.evidenceNotes.map(n => `<div class="ev">${lvl(n.level)}<span>${n.claim}</span><span class="refs">${n.refs.map(refNo).map(x => `〔${x}〕`).join("") || "—"}</span></div>`).join("")}</div>
+      <h2>參考資料</h2>${refsList()}</main>
+    <div class="margin-figs">${chapter.images.map(i => fig(i)).join("")}</div>
+  </div></section>
+  <section class="famzone" id="fam"><div class="famzone-inner">
+    <h2>親子共學</h2><div class="steps"><span>① 唸故事 3 分鐘</span><span>② 看照片聊一聊</span><span>③ 動手做 ${a.minutes} 分鐘</span></div>
+    <div class="card"><h3>① 故事開場 <button class="btn" id="bigread" style="float:right">朗讀模式</button></h3><div class="readaloud" id="readaloud">${storyText}</div></div>
+    <div class="card"><h3>② 觀察提問</h3><div class="qcards">${ph(imgByFile(f.anchorImage))}${Object.entries(f.questions).map(([k, q]) => `<div class="qc"><div class="tag">${QLABEL[k]}</div><p>${q.basic}</p><div class="older">大一點的孩子：${q.older}</div></div>`).join("")}</div><p style="font-size:14.5px;color:#6a6254;margin-bottom:0">家長提示：${f.parentTips.join(" ")}</p></div>
+    <div class="card"><h3>③ ${a.name}</h3><div class="actmeta"><span>${a.minutes} 分鐘</span><span>${a.steps.length} 步</span><span>大人要在場</span></div><p><b>材料：</b>${a.materials.join("、")}</p><ul class="checklist">${a.steps.map((s, i) => `<li><label><input type="checkbox">${i + 1}. ${s}</label></li>`).join("")}</ul><p><b>大人要做什麼：</b>${a.adultRole}</p><p style="color:#6a6254">${a.link}</p></div>
+  </div></section></div>`;
+}
+
+storyText = [
+  "很久很久以前，大約兩千多年前，有一艘大船在希臘的海上航行。船上裝滿了好看的雕像、亮晶晶的玻璃瓶，還有一個小小的、裡面有很多齒輪的機器。",
+  "後來，大船沉到了海底。雕像、瓶子和那個小機器，都躺在沙子裡，一躺就是兩千年。魚游過去，海草長出來，誰也不知道它們在那裡。",
+  "有一天，一群潛水的人潛到海底，想撿海綿。他們在沙子裡看見一隻綠綠的青銅手臂，嚇了一大跳。原來，那是一座雕像的手！大家把雕像、瓶子一樣一樣撈上來，送到博物館。",
+  "在博物館裡，有一團綠綠的、裂成好幾塊的青銅，看起來一點也不特別。可是有一天，有人靠近一看，發現上面有一圈一圈小小的尖齒，就像腳踏車上的齒輪。",
+  "又過了一百年，科學家用一種特別的照相機，從外面照進青銅的裡面。他們看到了好多齒輪，大大小小，還有刻在上面、小到幾乎看不見的字。",
+  "那些字告訴大家：這個機器是用來算天空的。轉一轉旁邊的把手，就能知道月亮什麼時候圓、什麼時候彎，還能知道太陽和月亮什麼時候會被遮住。",
+  "到底是誰做了它呢？到現在，還沒有人知道。也許，答案還躺在海底的沙子裡，等著有人再去找。",
+].map(t => `<p>${t}</p>`).join("");
+
+// ---- 切換器 ----
+const VARIANTS = { A: ["雜誌長文", VariantA], B: ["側欄導覽", VariantB], C: ["雙入口", VariantC] };
+const KEYS = Object.keys(VARIANTS);
+const current = () => { const v = new URLSearchParams(location.search).get("variant"); return KEYS.includes(v) ? v : "A"; };
+function render() {
+  const v = current();
+  document.getElementById("root").innerHTML = VARIANTS[v][1]();
+  document.getElementById("label").textContent = `${v}（${VARIANTS[v][0]}）`;
+  document.querySelectorAll(".vB .tabs button").forEach(b => b.onclick = () => { history.replaceState(null, "", "#tab-" + b.dataset.tab); render(); });
+  const big = document.getElementById("bigread");
+  if (big) big.onclick = () => { const r = document.getElementById("readaloud"); r.classList.toggle("big"); big.textContent = r.classList.contains("big") ? "離開朗讀模式" : "朗讀模式"; if (r.classList.contains("big")) r.prepend(big); else big.parentElement === r && document.querySelector(".vC .card h3").append(big); };
+  const toc = document.getElementById("toc");
+  if (toc) {
+    const links = [...toc.querySelectorAll("a")];
+    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) links.forEach(l => l.classList.toggle("on", l.getAttribute("href") === "#" + e.target.id)); }), { rootMargin: "0px 0px -70% 0px" });
+    document.querySelectorAll(".vB main [id]").forEach(el => io.observe(el));
+  }
+}
+function go(step) {
+  const i = (KEYS.indexOf(current()) + step + KEYS.length) % KEYS.length;
+  const u = new URL(location.href); u.searchParams.set("variant", KEYS[i]); u.hash = "";
+  history.replaceState(null, "", u); render(); scrollTo(0, 0);
+}
+document.getElementById("prev").onclick = () => go(-1);
+document.getElementById("next").onclick = () => go(1);
+addEventListener("keydown", e => {
+  if (e.target.closest("input, textarea, [contenteditable]")) return;
+  if (e.key === "ArrowLeft") go(-1);
+  if (e.key === "ArrowRight") go(1);
+});
+render();
+</script>
+</body>
+</html>
