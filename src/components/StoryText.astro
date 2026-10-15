@@ -1,0 +1,10 @@
+---
+interface Props {
+  /** 故事開場的段落（story.md 以空行切段）。 */
+  paragraphs: readonly string[];
+}
+
+const { paragraphs } = Astro.props;
+---
+
+{paragraphs.map((text) => <p>{text}</p>)}

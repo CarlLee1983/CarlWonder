@@ -5,8 +5,9 @@ import {
   listDirectories,
   readMarkdown,
   readMarkdownBody,
-} from "./io.ts";
+} from "../content/markdown-files.ts";
 import { checkEvidence } from "./evidence.ts";
+import { activityWarnings, checkFamily } from "./family.ts";
 import { validateFrontmatter } from "./frontmatter.ts";
 import { checkChapterImages, checkResearch } from "./images.ts";
 import { checkBody, checkStory, checkTitle } from "./text-checks.ts";
@@ -30,6 +31,7 @@ const readFailure = (file: string, error: unknown): Issue => ({
 async function checkChapter(
   dir: string,
   researchDir: string,
+  onWarning?: (warning: Issue) => void,
 ): Promise<Issue[]> {
   const issues: Issue[] = [];
   let imageFiles: string[] = [];
@@ -46,10 +48,10 @@ async function checkChapter(
         ...checkBody(chapterFile, chapter.body),
       );
       // schema 不過就沒有可靠的欄位可檢查，只回報形狀問題。
-      const frontmatter = validateFrontmatter(chapterFile, chapter.data);
+      const frontmatter = await validateFrontmatter(chapterFile, chapter.data);
       issues.push(...frontmatter.issues);
       if (frontmatter.data) {
-        const { images, references, evidenceNotes } = frontmatter.data;
+        const { images, references, evidenceNotes, family } = frontmatter.data;
         const result = await checkChapterImages(
           chapterFile,
           dir,
@@ -60,7 +62,11 @@ async function checkChapter(
         issues.push(
           ...result.issues,
           ...checkEvidence(chapterFile, references, evidenceNotes),
+          ...checkFamily(chapterFile, family, images),
         );
+        for (const warning of activityWarnings(chapterFile, family)) {
+          onWarning?.(warning);
+        }
         imageFiles = result.files;
       }
     }
@@ -123,7 +129,11 @@ export async function runContentChecks(
   }
   const perChapter = await Promise.all(
     slugs.map((slug) =>
-      checkChapter(join(options.chaptersDir, slug), options.researchDir),
+      checkChapter(
+        join(options.chaptersDir, slug),
+        options.researchDir,
+        options.onWarning,
+      ),
     ),
   );
   return perChapter.flat();

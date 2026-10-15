@@ -1,4 +1,5 @@
 import type { ChapterImage } from "../content/chapter-schema.ts";
+import { creditSegments } from "../content/image-credit.ts";
 import { IMAGE_BADGES, isSelfMade } from "../content/image-types.ts";
 import {
   referenceAnchor,
@@ -67,17 +68,15 @@ function imaginedLine(
   ];
 }
 
-/** 非自製圖末行：「照片：作者，授權」，作者連原始檔案頁、授權連條款，裁切的加註。欄位已驗過。 */
+/** 非自製圖末行；內容由 creditSegments 產生，與觀察提問卡共用。欄位已驗過。 */
 function creditLine(image: ChapterImage): Element {
-  const credit = image.credit!;
-  const license = image.license!;
-  return element("p", { className: ["chapter-figure__credit"] }, [
-    text("照片："),
-    link(credit.sourceUrl, credit.author),
-    text("，"),
-    link(license.url, license.name),
-    ...(credit.cropped ? [text("（經裁切）")] : []),
-  ]);
+  return element(
+    "p",
+    { className: ["chapter-figure__credit"] },
+    creditSegments(image).map(({ text: value, href }) =>
+      href ? link(href, value) : text(value),
+    ),
+  );
 }
 
 /**

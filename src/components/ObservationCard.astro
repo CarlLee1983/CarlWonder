@@ -1,0 +1,146 @@
+---
+import { Image } from "astro:assets";
+import type { AnchorPhoto } from "../content/anchor-image";
+import type { Family } from "../content/chapter-schema";
+import { creditSegments } from "../content/image-credit";
+
+interface Props {
+  questions: Family["questions"];
+  parentTips: Family["parentTips"];
+  /** 錨點實物照片與正文同一個圖檔，alt 沿用正文該圖的 alt。 */
+  anchor: AnchorPhoto;
+}
+
+const { questions, parentTips, anchor } = Astro.props;
+const credit = creditSegments(anchor.image);
+// 三格依序對應「看到／覺得／好奇」；畫面不出現證據等級名稱。
+const cells = [
+  { label: "看到", ...questions.see },
+  { label: "覺得", ...questions.think },
+  { label: "好奇", ...questions.wonder },
+];
+---
+
+<article class="card observation-card">
+  <h3>觀察提問</h3>
+  <div class="observation-card__grid">
+    <div class="observation-card__photo">
+      <Image
+        src={anchor.src}
+        alt={anchor.alt}
+        sizes="(min-width: 62rem) 22rem, min(100vw - 4rem, 40rem)"
+        loading="lazy"
+      />
+      {
+        credit.length > 0 && (
+          <p class="observation-card__credit">
+            {credit.map(({ text, href }) =>
+              href ? <a href={href}>{text}</a> : text,
+            )}
+          </p>
+        )
+      }
+    </div>
+    <div class="observation-card__cells">
+      {
+        cells.map((cell) => (
+          <section class="cell">
+            <h4>{cell.label}</h4>
+            <p>{cell.basic}</p>
+            <p class="cell__older">
+              <strong>大一點的孩子：</strong>
+              {cell.older}
+            </p>
+          </section>
+        ))
+      }
+    </div>
+  </div>
+  <div class="observation-card__tips">
+    <h4>家長提示</h4>
+    <ul>
+      {parentTips.map((tip) => <li>{tip}</li>)}
+    </ul>
+  </div>
+</article>
+
+<style>
+  .observation-card__grid {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .observation-card__photo img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+  }
+
+  .observation-card__credit {
+    margin: 0.4rem 0 0;
+    color: #5a4c33;
+    font-size: 0.8125rem;
+    line-height: 1.6;
+  }
+
+  .observation-card__cells {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .cell {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    background: #fff;
+  }
+
+  .cell h4 {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+
+  .cell p {
+    margin: 0.4rem 0 0;
+  }
+
+  /* 延伸題固定在格子底部，與基本題用虛線分開。 */
+  .cell__older {
+    margin-top: auto;
+    padding-top: 0.75rem;
+    border-top: 1px dashed #c9b88c;
+    color: #5a4c33;
+    font-size: 0.9375rem;
+  }
+
+  .observation-card__tips {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e0d3b0;
+    color: #4a3d28;
+    font-size: 0.9375rem;
+  }
+
+  .observation-card__tips h4 {
+    margin: 0;
+  }
+
+  .observation-card__tips ul {
+    margin: 0.25rem 0 0;
+    padding-left: 1.25rem;
+  }
+
+  @media (min-width: 62rem) {
+    .observation-card__grid {
+      grid-template-columns: 22rem 1fr;
+      align-items: start;
+    }
+
+    .observation-card__cells {
+      grid-template-columns: repeat(3, 1fr);
+      align-items: stretch;
+    }
+  }
+</style>

@@ -1,6 +1,6 @@
 import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
-import { chapterSchema } from "./content/chapter-schema";
+import { createChapterSchema } from "./content/chapter-schema";
 import { assertChapterSlug } from "./content/chapter-slug";
 import {
   contentLoaderBase,
@@ -16,7 +16,8 @@ const chapters = defineCollection({
     pattern: "*/chapter.md",
     generateId: ({ entry }) => assertChapterSlug(entry.split("/")[0]!),
   }),
-  schema: chapterSchema,
+  // image() 讓 family.anchorImage 由 Astro 解析成圖片中繼資料，不論 CHAPTERS_DIR 指到哪裡都能用。
+  schema: ({ image }) => createChapterSchema(image),
 });
 
 export const collections = { chapters };

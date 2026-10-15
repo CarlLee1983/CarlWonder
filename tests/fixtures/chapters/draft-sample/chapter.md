@@ -25,11 +25,52 @@ evidenceNotes:
     level: legend
   - claim: 草稿的未知問題
     level: unknown
+images:
+  - file: bell-tower-photo.webp
+    type: artifact-photo
+    caption: "霧港鐘樓的外觀，石牆厚達一公尺。"
+    credit:
+      author: 測試攝影者甲
+      sourceUrl: https://example.com/files/bell-tower-photo
+    license:
+      name: CC0 1.0
+      url: https://creativecommons.org/publicdomain/zero/1.0/
+family:
+  anchorImage: bell-tower-photo.webp
+  questions:
+    see:
+      basic: 照片裡的鐘樓有幾扇窗？它們是什麼形狀？
+      older: 石牆看起來有多厚？你是從哪裡看出來的？
+    think:
+      basic: 你猜鐘樓為什麼只開這麼小的窗？
+      older: 如果要讓船在霧裡找得到方向，窗開在哪裡最有用？
+    wonder:
+      basic: 看著這座鐘樓，你還想知道什麼？
+      older: 要怎麼做，才能知道岩石底下到底有什麼？
+  parentTips:
+    - 孩子說出窗的數量後，可以再問：窗是方的還是長的？
+    - 孩子猜的時候先不糾正，說完再告訴他學者怎麼猜。
+  activity:
+    name: 紙杯回聲鐘
+    minutes: 20
+    materials:
+      - 紙杯兩個
+      - 棉線一條
+      - 迴紋針兩個
+    steps:
+      - 在每個紙杯底部各戳一個小洞
+      - 把棉線穿過洞，用迴紋針在杯內側卡住
+      - 兩人各拿一個紙杯，把線拉直
+      - 一人輕聲說話，另一人把杯子貼在耳邊聽
+    adultRole: 幫忙在紙杯底部戳洞，並提醒孩子拉線時不要太用力。
+    link: 聲音沿著繩子傳到另一端，就像鐘聲沿著竹管傳進機房。
 ---
 
 ## 草稿的第一節
 
 草稿篇章的正文，正式建置不輸出這一頁。
+
+![霧港鐘樓的外觀，灰白石牆上有四扇狹窄的窗](./bell-tower-photo.webp)
 
 ## 鐘樓上的第一個謎團
 

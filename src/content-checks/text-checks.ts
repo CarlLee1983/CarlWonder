@@ -1,6 +1,6 @@
-import { countText } from "./count-text.ts";
+import { countText } from "../content/count-text.ts";
 import type { Issue } from "./issue.ts";
-import { h2Headings } from "./markdown-source.ts";
+import { h2Headings } from "../content/markdown-source.ts";
 import {
   BANNED_PHRASES,
   BANNED_TITLE_WORDS,

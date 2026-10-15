@@ -9,7 +9,7 @@ export const BODY_LENGTH = { min: 3000, max: 5000 } as const;
 /**
  * 故事開場（story.md）字數區間。
  * 這是由語速推估的起點；ticket 06 由安提基特拉樣章實測朗讀後校正，
- * 並與 docs/writing-spec.md 的字數在同一個變更裡修訂。
+ * 並與 docs/writing-spec.md 的字數、content/reading-time.ts 的朗讀速度在同一個變更裡修訂。
  */
 export const STORY_LENGTH = { min: 450, max: 600 } as const;
 
@@ -54,3 +54,38 @@ export const LICENSE_HELP = `CC0 1.0、公有領域、${CC_FAMILIES.map(
 
 /** 研究紀錄中須列出每個圖檔名的小節標題（`## 圖片`）。 */
 export const RESEARCH_IMAGES_HEADING = "圖片";
+
+/** 家庭探索活動的上限（docs/writing-spec.md〈家庭探索活動〉）。 */
+export const ACTIVITY_LIMITS = { maxMinutes: 30, maxSteps: 6 } as const;
+
+/**
+ * 活動禁用清單（docs/writing-spec.md〈家庭探索活動〉）：活動文字含這些關鍵字只警告、不擋建置，
+ * 由站主判斷是否誤判。`rule` 是該段禁用規則在規格中的名稱。
+ */
+export const ACTIVITY_FORBIDDEN: readonly {
+  keyword: string;
+  rule: string;
+}[] = [
+  { keyword: "釹磁鐵", rule: "強力磁鐵（釹磁鐵）" },
+  { keyword: "強力磁鐵", rule: "強力磁鐵（釹磁鐵）" },
+  { keyword: "鈕扣電池", rule: "需要拆卸鈕扣電池" },
+  { keyword: "直視太陽", rule: "直視太陽" },
+  { keyword: "明火", rule: "明火與加熱" },
+  { keyword: "蠟燭", rule: "明火與加熱" },
+  { keyword: "打火機", rule: "明火與加熱" },
+  { keyword: "火柴", rule: "明火與加熱" },
+  { keyword: "加熱", rule: "明火與加熱" },
+  { keyword: "清潔劑", rule: "混合清潔劑或化學品" },
+  { keyword: "漂白水", rule: "混合清潔劑或化學品" },
+  { keyword: "氣球", rule: "8 歲以下孩子用氣球" },
+];
+
+/**
+ * 材料含這些小件物品時警告（docs/writing-spec.md〈家庭探索活動〉）：
+ * 規格要求提醒家長收好、不讓年幼的弟妹拿到，機器看不出有沒有寫，所以只提醒站主確認。
+ */
+export const ACTIVITY_SMALL_PARTS: readonly string[] = [
+  "小零件",
+  "小珠",
+  "彈珠",
+];

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { countText } from "../src/content-checks/count-text.ts";
+import { countText } from "../src/content/count-text.ts";
 
 // 期望值都是手算的字面值，不由實作推導。
 describe("countText", () => {

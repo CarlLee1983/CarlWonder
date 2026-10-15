@@ -1,7 +1,19 @@
 ---
 import { render } from "astro:content";
+import { join, resolve } from "node:path";
+import EntryDoors from "../../components/EntryDoors.astro";
 import EvidenceNotes from "../../components/EvidenceNotes.astro";
+import FamilyLearning from "../../components/FamilyLearning.astro";
 import References from "../../components/References.astro";
+import { resolveChaptersDir } from "../../content/content-dir";
+import {
+  adultReadingMinutes,
+  familyTotalMinutes,
+  storyReadingMinutes,
+} from "../../content/reading-time";
+import { resolveAnchorPhoto } from "../../content/anchor-image";
+import { readMarkdownBody } from "../../content/markdown-files";
+import { splitBlocks } from "../../content/markdown-source";
 import { referenceNumbers } from "../../content/reference-numbers";
 import Base from "../../layouts/Base.astro";
 import { getVisibleChapters } from "../../utils/chapters";
@@ -16,29 +28,59 @@ export async function getStaticPaths() {
 
 const { chapter } = Astro.props;
 const { Content } = await render(chapter);
-const { references, evidenceNotes, lastChecked } = chapter.data;
+const { references, evidenceNotes, lastChecked, family, images } = chapter.data;
 const numbers = referenceNumbers(references);
+
+// story.md 不在內容集合裡，直接讀檔；純 Markdown 段落，以空行切段。
+const storyText = readMarkdownBody(
+  join(resolve(resolveChaptersDir()), chapter.id, "story.md"),
+);
+if (storyText === undefined) {
+  throw new Error(`篇章 ${chapter.id} 找不到 story.md（故事開場口述稿）。`);
+}
+const paragraphs = splitBlocks(storyText);
+const anchor = resolveAnchorPhoto(
+  chapter.id,
+  family.anchorImage,
+  images,
+  chapter.body ?? "",
+);
 ---
 
 <Base
   title={`${chapter.data.title}｜CarlWonder`}
   description={chapter.data.summary}
   wide
+  bleed
 >
   <article>
-    <h1>{chapter.data.title}</h1>
-    <p>{chapter.data.summary}</p>
-    <div class="chapter-body">
-      <Content />
-    </div>
-    <div class="chapter-evidence">
-      <EvidenceNotes
-        notes={evidenceNotes}
-        numbers={numbers}
-        chapterId={chapter.id}
+    <div class="page-column">
+      <h1>{chapter.data.title}</h1>
+      <p>{chapter.data.summary}</p>
+      <EntryDoors
+        adultMinutes={adultReadingMinutes(chapter.body ?? "")}
+        familyMinutes={familyTotalMinutes(storyText, family.activity.minutes)}
       />
-      <References references={references} lastChecked={lastChecked} />
+      <section id="reading" aria-label="深入正文">
+        <div class="chapter-body">
+          <Content />
+        </div>
+        <div class="chapter-evidence">
+          <EvidenceNotes
+            notes={evidenceNotes}
+            numbers={numbers}
+            chapterId={chapter.id}
+          />
+          <References references={references} lastChecked={lastChecked} />
+        </div>
+      </section>
     </div>
+    <FamilyLearning
+      family={family}
+      paragraphs={paragraphs}
+      storyMinutes={storyReadingMinutes(storyText)}
+      anchor={anchor}
+    />
   </article>
 </Base>
 

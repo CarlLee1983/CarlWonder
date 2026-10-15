@@ -372,9 +372,8 @@ describe("圖片：研究紀錄", () => {
     ]);
   });
 
-  it("沒有圖片的篇章不要求「圖片」一節（草稿範例）", async () => {
-    // 通過情境的 draft-sample 沒有圖片也沒有「圖片」一節，已在通過情境涵蓋；
-    // 這裡確認它的研究紀錄不存在時一樣失敗。
+  it("研究紀錄不存在時失敗（草稿範例）", async () => {
+    // draft 篇章同樣受檢查：它的研究紀錄不存在時一樣失敗。
     const s = scenario();
     rmSync(`${s.researchDir}/draft-sample.md`);
     await expectIssues(s, [
