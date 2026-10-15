@@ -1,7 +1,7 @@
 ---
 title: 三星堆：誰做了這些大眼面具？
 summary: 從突出的眼睛、鑄造接縫到跨坑接上的碎片，追問三星堆面具怎麼做成，也分清楚埋藏年代、工匠身分與祭祀用途能回答到哪裡。
-draft: true
+draft: false
 publishedAt: 2026-10-15
 lastChecked: "2026-10-15"
 references:
