@@ -21,7 +21,7 @@ slug：`antikythera-mechanism`｜領域：古文明（橋接天文）｜地區�
 | Freeth 2014, *PLOS ONE*（`freeth-2014`） | 全文（Europe PMC 全文 XML，PMC4116162；CC BY） | 日月食盤模型最吻合的起點是第 1 個月的滿月，天文紀年 -204 年 5 月 12 日（即公元前 205 年）；結果 "should be treated with due caution"；"it should not necessarily be inferred that the date of the Antikythera Mechanism is the same as the date for which the Saros Dial was designed. The Mechanism could, for example, have been made at a later date"；"The new epigraphic analysis of the eclipse inscriptions … is fully consistent with 205 BC, though there is still debate about the relevance of some comparanda"；"An epoch … in 205 BC brings it close to the life of Archimedes, who was killed in the siege of Syracuse in Sicily in 212 BC"；"It would be purely speculative to suggest that the Antikythera Mechanism owed its design to … Archimedes, in collaboration with … Apollonios of Perga"；"could have been made by an unknown genius" |
 | 西塞羅《論共和國》1.21–22（`cicero-republic`） | 拉丁原文（The Latin Library） | 馬塞盧斯攻下敘拉古後，從大批戰利品裡只把天球儀帶回家（"cum aliud nihil ex tanta praeda domum suam deportavisset"）；實心天球早已有人做過，阿基米德的發明在於一次轉動保留快慢不同的運行；轉動時月亮落後太陽的圈數與天上日數相合，演示日食（"sphaera solis fieret eadem illa defectio"），以及月亮進入地球影子（"incideret luna tum in eam metam quae esset umbra terrae"，即月食；原文此處殘缺） |
 | 西塞羅《論神性》2.88（`cicero-nature-gods`） | 拉丁原文（The Latin Library）＋ Rackham 英譯（LacusCurtius） | 書中人物說「我們的朋友波希多尼」新做的天球儀，每轉一圈，太陽、月亮與五顆行星的運動與天上一日一夜相同。注意：波希多尼的天球儀出自《論神性》2.88，不在《論共和國》1.21–22 |
-| Skeptoid #184（`skeptoid-184`） | 全文（節目逐字稿頁面） | 只當流行說法的出處：「有人說它證明了時間旅行、外星人造訪或亞特蘭提斯」，起因是「比同類早一千年」；「第一台」的反駁：原文 "it's one of the earliest known uses of meshing gears. But contrary to the popular telling, it's not the oldest"，並舉 "Aristotle described the function of gears in the 4th century BCE"。節目同段另說印度公元前 2600 年用齒輪驅動門與汲水，本次未查證，正文不引用 |
+| Skeptoid #184（`skeptoid-184`） | 全文（節目逐字稿頁面） | 只當流行說法的出處：「有人說它證明了時間旅行、外星人造訪或亞特蘭提斯」，起因是「比同類早一千年」；未採用的「第一台」反駁：原文 "it's one of the earliest known uses of meshing gears. But contrary to the popular telling, it's not the oldest"，並舉 "Aristotle described the function of gears in the 4th century BCE"。節目同段另說印度公元前 2600 年用齒輪驅動門與汲水，本次未查證，正文不引用 |
 | Szigety & Arenas 2025, arXiv:2504.00327（`szigety-arenas-2025`） | 摘要（arXiv API）；arXiv 未列期刊出處，網路搜尋也沒找到正式出版 | 寫成「尚未經同儕審查的研究」：依 Edmunds 的誤差估計，模擬顯示齒輪易卡死或脫齒；要嘛從未正常運轉，要嘛實際誤差較小，作者傾向後者，並提醒結果要謹慎解讀 |
 | Carman & Evans 2014, *Archive for History of Exact Sciences* 68（無鍵，已從參考資料移除） | [只確認書目]（DOI 10.1007/s00407-014-0145-5、題名、卷期頁）。CONICET 典藏 11336/98820：curl 連線逾時（60 秒），WebFetch 回 ECONNREFUSED；DocumentCloud 副本：curl 被 Cloudflare 擋、WebFetch 回 403；Springer 頁面導向登入；Crossref 沒有摘要。搜尋結果片段提到該文結論為公元前 205 年 5 月 12 日的滿月，屬搜尋摘錄，不採用 | 不採用任何主張。公元前 205 年由 Freeth 2014 全文支撐，正文也不再提 Carman 與 Evans |
 | Freeth et al. 2006, *Nature* 444（無鍵，已從參考資料移除） | 摘要（PubMed 17136087） | 不採用。正文沒有任何句子用到它，所以不列入參考資料；喜帕恰斯、銘文數量加倍、unique 等說法只見於此摘要，見「排除的說法」 |
@@ -50,7 +50,7 @@ slug：`antikythera-mechanism`｜領域：古文明（橋接天文）｜地區�
 - 十二個月約 354 天、19 年週期用來安排閏月：天數是一般天文常識；希臘城邦以閏月對齊季節、默冬週期安排閏月，[已查證] 2008 補充說明第 3 節。
 - 月亮不等速運動的齒輪：[已查證] Freeth 2021 全文（不提喜帕恰斯）。
 - 2005 年掃描的合作單位：[已查證] Freeth 2021 致謝。
-- 「第一台」：館方「現存最早的可攜式天文計算器」[已查證]；Skeptoid 說它不是最早用齒輪的器物，正文標明是 Skeptoid 的提醒，不引它舉的例子 [已查證：流行來源原文]。
+- 「第一台」：館方「現存最早的可攜式天文計算器」[已查證]；Skeptoid 的齒輪技術史反駁只有流行來源支持，發布前檢查時從正文移除；不能只因確實有此說法，就當作已核實的技術史。
 - 「電腦」：研究者用這個詞 [已查證]（Freeth 2021 開頭）；「功能由齒數固定、不像今天的電腦可以換程式」是 [推論]，正文寫「它的每一項功能可能都由齒數固定下來」「可能比『電腦』更貼切」。
 - 「設計可能結合了巴比倫天文週期、柏拉圖學園數學與古希臘天文理論」：[已查證] Freeth 2021 摘要的作者解讀，正文用「學者推測……可能」。
 - 阿基米德年代：卒年 212 年 [已查證] Freeth 2014；「205 年只比他死晚 7 年」是相減的結果；Freeth 認為起算點使年代靠近阿基米德，正文寫「在年代上，學者意見不同」「Freeth 在 2014 年推測」。
@@ -148,3 +148,8 @@ slug：`antikythera-mechanism`｜領域：古文明（橋接天文）｜地區�
 | 日期 | 朗讀者 | 字數 | 秒數 | 每分鐘字數 | 備註 |
 |---|---|---|---|---|---|
 | 2026-10-15 | 站主 | 490 | 約 90 | 約 327 | 單次計時；結果：維持 450–600 字，規格改寫為約 1.5–2 分鐘。之後依查核修字，字數改為 496 |
+
+## 發布前修訂（2026-10-15）
+
+- 移除 Skeptoid「不是最早用齒輪」的反駁：只核對節目逐字稿，沒有支撐該技術史主張的一手或權威來源。保留館方「現存最早的可攜式天文計算器」及其限定，Skeptoid 仍只作流行說法出處。
+- 「覺得」改為觀察齒輪、猜原有連接，家長接上 Freeth 2021 團隊依支柱、孔洞、零件與銘文提出可能模型的做法，明說缺失部分仍不確定。來源已核對全文；故事、證據說明分級與照片未改。
