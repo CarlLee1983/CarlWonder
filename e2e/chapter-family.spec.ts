@@ -3,7 +3,7 @@ import { expectNoAxeViolations } from "./a11y-helpers";
 
 // 期望值取自 tests/fixtures/chapters/sample-chapter 的字面值：
 // 正文 3,288 字 → 3288 / 400 = 8.22 → 約 9 分鐘；
-// 故事開場 482 字 → 482 / 175 = 2.75 → 3 分鐘，3 + 5（看照片聊一聊）+ 20（活動）= 約 28 分鐘。
+// 故事開場 482 字 → 482 / 327 = 1.47 → 2 分鐘，2 + 5（看照片聊一聊）+ 20（活動）= 約 27 分鐘。
 const PATH = "/chapters/sample-chapter/";
 const ANCHOR_ALT = "霧港鐘樓的外觀，灰白石牆上有四扇狹窄的窗";
 
@@ -19,7 +19,7 @@ test.describe("雙入口首屏", () => {
       name: /^給家長與 6–10 歲的孩子：親子共學/,
     });
     await expect(adult).toContainText("約 9 分鐘");
-    await expect(parent).toContainText("約 28 分鐘");
+    await expect(parent).toContainText("約 27 分鐘");
   });
 
   test("點擊後跳到對應區段", async ({ page }) => {
@@ -62,7 +62,7 @@ test.describe("親子共學區段", () => {
     ).toBeVisible();
     const steps = section.locator("ol").first().getByRole("listitem");
     await expect(steps).toHaveText([
-      "① 唸故事 3 分鐘",
+      "① 唸故事 2 分鐘",
       "② 看照片聊一聊 5 分鐘",
       "③ 動手做 20 分鐘",
     ]);

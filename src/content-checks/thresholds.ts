@@ -8,8 +8,8 @@ export const BODY_LENGTH = { min: 3000, max: 5000 } as const;
 
 /**
  * 故事開場（story.md）字數區間。
- * 這是由語速推估的起點；ticket 06 由安提基特拉樣章實測朗讀後校正，
- * 並與 docs/writing-spec.md 的字數、content/reading-time.ts 的朗讀速度在同一個變更裡修訂。
+ * 2026-10-15 依安提基特拉實測朗讀（約 327 字／分）決定維持字數、改寫時間為約 1.5–2 分鐘；
+ * 改動時同步 docs/writing-spec.md〈故事開場〉與 content/reading-time.ts 的朗讀速度。
  */
 export const STORY_LENGTH = { min: 450, max: 600 } as const;
 

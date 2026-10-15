@@ -1,15 +1,15 @@
 import { countText } from "./count-text.ts";
 
 /**
- * 篇章頁兩扇門顯示的時間估算。以下三個常數都是推估，不是實測：
- * - 大人默讀速度每分鐘 400 字；
- * - 故事朗讀每分鐘 175 字，依 docs/writing-spec.md 的 150–200 字／分推估，
- *   待 ticket 06 實測朗讀後校正，與 content-checks/thresholds.ts 的故事開場字數同一個變更修訂；
- * - 「看照片聊一聊」固定 5 分鐘。
+ * 篇章頁兩扇門顯示的時間估算：
+ * - 大人默讀速度每分鐘 400 字（推估）；
+ * - 故事朗讀每分鐘 327 字：2026-10-15 站主朗讀安提基特拉故事開場 490 字約 90 秒的實測值，
+ *   紀錄在 docs/research/antikythera-mechanism.md〈朗讀計時紀錄〉；改動時同步 docs/writing-spec.md〈故事開場〉；
+ * - 「看照片聊一聊」固定 5 分鐘（推估）。
  * 計字一律用 countText()，分鐘數無條件進位。
  */
 export const ADULT_CHARS_PER_MINUTE = 400;
-export const STORY_CHARS_PER_MINUTE = 175;
+export const STORY_CHARS_PER_MINUTE = 327;
 export const OBSERVATION_MINUTES = 5;
 
 const minutesFor = (markdown: string, charsPerMinute: number) =>
