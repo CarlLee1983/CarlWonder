@@ -166,6 +166,59 @@ test.describe("寬螢幕", () => {
     }
   });
 
+  test("旁欄圖片比所屬段落高時，正文欄不留空白、圖片不重疊也不蓋到正文", async ({
+    page,
+  }) => {
+    await page.goto(PATH);
+    const REM = 16;
+    const boxOf = async (text: string) =>
+      (await page.locator("p", { hasText: text }).first().boundingBox())!;
+
+    // 前提：研究重建圖加複製品圖疊起來，比它們所屬的段落高。
+    const ownBox = await boxOf("工程師在第二天爬上了鐘樓");
+    const wheel = (await figureOf(page, WHEEL_ALT).boundingBox())!;
+    const replica = (await figureOf(page, REPLICA_ALT).boundingBox())!;
+    expect(replica.y + replica.height - wheel.y).toBeGreaterThan(ownBox.height);
+
+    // 每一對「所屬段落、下一段」：正文欄連續，距離不超過正常段距。
+    for (const { alt, own, next } of PLACEMENT) {
+      const a = await boxOf(own);
+      const b = await boxOf(next);
+      expect(b.y - (a.y + a.height), alt).toBeLessThanOrEqual(2 * REM);
+    }
+
+    // 圖片不蓋到任何正文段落，彼此也不重疊。
+    const figures: { x: number; y: number; width: number; height: number }[] =
+      [];
+    for (const { alt } of PLACEMENT) {
+      figures.push((await figureOf(page, alt).boundingBox())!);
+    }
+    const paragraphs = await page
+      .locator(".chapter-body > p, .chapter-block > p")
+      .all();
+    for (const paragraph of paragraphs) {
+      const p = (await paragraph.boundingBox())!;
+      for (const f of figures) {
+        const overlaps =
+          f.x < p.x + p.width &&
+          p.x < f.x + f.width &&
+          f.y < p.y + p.height &&
+          p.y < f.y + f.height;
+        expect(overlaps).toBe(false);
+      }
+    }
+    for (const [i, f] of figures.entries()) {
+      for (const g of figures.slice(i + 1)) {
+        const overlaps =
+          f.x < g.x + g.width &&
+          g.x < f.x + f.width &&
+          f.y < g.y + g.height &&
+          g.y < f.y + f.height;
+        expect(overlaps).toBe(false);
+      }
+    }
+  });
+
   test("無 axe 違規", async ({ page }) => {
     await page.goto(PATH);
     await expectNoAxeViolations(page, "寬螢幕篇章頁");

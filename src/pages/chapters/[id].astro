@@ -148,28 +148,28 @@ const anchor = resolveAnchorPhoto(
       max-width: 40rem;
     }
 
+    /* 圖片用 float 推進右側旁欄：它不計入區塊高度，正文欄因此連續排版；
+       clear: right 讓同欄的圖往下疊，圖比後續段落長就繼續往下延伸。
+       段落改成 inline-block、與 float 圖同一行，圖的頂端才會和所屬段落齊頭。 */
+    .chapter-body {
+      display: flow-root;
+    }
+
     .chapter-block {
-      display: grid;
-      grid-template-columns: 40rem 17.5rem;
-      column-gap: 2rem;
-      align-items: start;
+      width: 40rem;
     }
 
     .chapter-block > p {
-      grid-area: 1 / 1;
+      display: inline-block;
+      vertical-align: top;
+      width: 100%;
     }
 
     .chapter-block > .chapter-figure {
-      grid-column: 2;
-      margin: 0;
-    }
-
-    .chapter-block > .chapter-figure:first-of-type {
-      grid-row: 1;
-    }
-
-    .chapter-block > .chapter-figure ~ .chapter-figure {
-      margin-top: 1em;
+      float: right;
+      clear: right;
+      width: 17.5rem;
+      margin: 0 -19.5rem 1em 0;
     }
   }
 </style>
